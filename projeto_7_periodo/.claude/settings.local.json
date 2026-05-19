@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(python -c \"import fastapi, pydantic, uvicorn; print\\('fastapi', fastapi.__version__\\); print\\('pydantic', pydantic.VERSION\\); print\\('uvicorn', uvicorn.__version__\\)\")",
+      "Bash(python -c \"from app.main import app; print\\('routes:', len\\(app.routes\\)\\); [print\\(' -', r.path\\) for r in app.routes if hasattr\\(r, 'path'\\)]\")",
+      "Bash(python -m pip install -q \"psycopg[binary]==3.2.3\" psycopg-pool==3.2.3 python-dotenv==1.0.1)",
+      "Bash(python -c ' *)"
+    ]
+  }
+}
