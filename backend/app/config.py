@@ -54,3 +54,17 @@ def build_conninfo() -> str:
 # ---------------------------------------------------------------------------
 WARNING_DEVIATION = 0.0
 CRITICAL_DEVIATION = 5.0
+
+# ---------------------------------------------------------------------------
+# MQTT (HiveMQ Cloud)
+# ---------------------------------------------------------------------------
+MQTT_HOST = os.getenv(
+    "MQTT_HOST", "bdffc9a5bf6e4bf28591393206fc27e0.s1.eu.hivemq.cloud"
+)
+MQTT_PORT = int(os.getenv("MQTT_PORT", "8883"))
+MQTT_USER = os.getenv("MQTT_USER", "")
+MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "")
+MQTT_USE_TLS = os.getenv("MQTT_USE_TLS", "true").lower() == "true"
+MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "gaia-backend")
+MQTT_KEEPALIVE = int(os.getenv("MQTT_KEEPALIVE", "60"))
+MQTT_TOPIC_PREFIX = os.getenv("MQTT_TOPIC_PREFIX", "gaia")

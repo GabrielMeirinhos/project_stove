@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import API_DESCRIPTION, API_PREFIX, API_TITLE, API_VERSION
 from app.db.connection import close_pool, get_pool
 from app.db.schema import ensure_schema
+from app.mqtt_client import start_mqtt, stop_mqtt
 from app.routers import (
     alerts,
     devices,
@@ -34,14 +35,18 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ARG001 — assinatura obrigatória
-    """Abre o pool e aplica o schema no startup; fecha no shutdown."""
+    """Abre o pool, aplica o schema e conecta no broker MQTT no startup."""
     logger.info("Inicializando pool de conexões PostgreSQL...")
     get_pool()
     ensure_schema()
+    logger.info("Conectando ao broker MQTT (HiveMQ)...")
+    start_mqtt()
     logger.info("Pronto.")
     try:
         yield
     finally:
+        logger.info("Encerrando cliente MQTT...")
+        stop_mqtt()
         logger.info("Fechando pool de conexões...")
         close_pool()
 
