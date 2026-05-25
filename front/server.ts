@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import * as mqtt from "mqtt";
@@ -8,12 +9,14 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  const MQTT_BROKER_HOST = process.env.MQTT_BROKER_HOST ?? "882be47d29a44dff8eb8bf7a5faa9835.s1.eu.hivemq.cloud";
-  const MQTT_BROKER_PORT = Number(process.env.MQTT_BROKER_PORT ?? "8883");
-  const MQTT_USERNAME = process.env.MQTT_USERNAME ?? "projetointegrador";
+  const MQTT_BROKER_HOST = process.env.MQTT_HOST ?? process.env.MQTT_BROKER_HOST ?? "882be47d29a44dff8eb8bf7a5faa9835.s1.eu.hivemq.cloud";
+  const MQTT_BROKER_PORT = Number(process.env.MQTT_PORT ?? process.env.MQTT_BROKER_PORT ?? "8883");
+  const MQTT_USERNAME = process.env.MQTT_USER ?? process.env.MQTT_USERNAME ?? "projetointegrador";
   const MQTT_PASSWORD = process.env.MQTT_PASSWORD ?? "Integrador123";
-  const MQTT_TOPIC = process.env.MQTT_TOPIC ?? "#";
-  const MQTT_URL = process.env.MQTT_URL ?? `mqtts://${MQTT_BROKER_HOST}:${MQTT_BROKER_PORT}`;
+  const MQTT_TOPIC_PREFIX = process.env.MQTT_TOPIC_PREFIX ?? "gaia";
+  const MQTT_TOPIC = process.env.MQTT_TOPIC ?? `${MQTT_TOPIC_PREFIX}/#`;
+  const MQTT_USE_TLS = process.env.MQTT_USE_TLS !== "false";
+  const MQTT_URL = process.env.MQTT_URL ?? `${MQTT_USE_TLS ? "mqtts" : "mqtt"}://${MQTT_BROKER_HOST}:${MQTT_BROKER_PORT}`;
 
   let latestSensorData: SensorData | null = null;
   let mqttStatus: MqttStatus = {

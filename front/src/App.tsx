@@ -63,13 +63,13 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('My Plant');
   const [demoMode, setDemoMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
-      return true;
+      return false;
     }
 
     const storedDemoMode = window.localStorage.getItem('gaia-demo-mode');
     if (storedDemoMode === 'on') return true;
     if (storedDemoMode === 'off') return false;
-    return true;
+    return false;
   });
   const [language, setLanguage] = useState<AppLanguage>(() => {
     if (typeof window === 'undefined') {
