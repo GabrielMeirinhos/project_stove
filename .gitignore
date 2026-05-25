@@ -1,0 +1,53 @@
+# ── Ambiente Python ───────────────────────────────────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Dataset ───────────────────────────────────────────────────────────────────
+# Kaggle cache (~/.cache/kagglehub) e qualquer pasta PlantVillage local
+**/PlantVillage/
+**/plantvillage/
+.kaggle/
+
+# ── Modelos treinados (binários grandes) ──────────────────────────────────────
+outputs/models/*.keras
+outputs/models/*.tflite
+outputs/models/*.h5
+outputs/models/saved_model/
+
+# Manter no git (pequenos e úteis como referência)
+!outputs/models/labels.json
+
+# ── Logs e plots gerados automaticamente ─────────────────────────────────────
+outputs/logs/
+outputs/plots/
+
+# Manter métricas e relatórios (pequenos, úteis para comparar experimentos)
+!outputs/config.json
+!outputs/test_metrics.json
+!outputs/classification_report.txt
+
+# ── Capturas da câmera ────────────────────────────────────────────────────────
+capture_*.jpg
+capture_*.png
+
+# ── Variáveis de ambiente ─────────────────────────────────────────────────────
+.env
+.env.*
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── Windows ───────────────────────────────────────────────────────────────────
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store

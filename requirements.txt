@@ -5,4 +5,5 @@ matplotlib
 seaborn
 kagglehub
 numpy
+tensorboard
 # tensorflow-addons
