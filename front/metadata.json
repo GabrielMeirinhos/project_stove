@@ -1,0 +1,7 @@
+{
+  "name": "Gaia",
+  "description": "Plataforma avançada de monitoramento agrícola com reconstrução 3D, visão computacional e análise de sensores em tempo real.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
