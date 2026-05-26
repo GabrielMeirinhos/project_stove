@@ -1,0 +1,14 @@
+# Override para desenvolvimento local — expõe portas no host.
+# Uso: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+services:
+  frontend:
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+  backend:
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  ml-inference:
+    ports:
+      - "${ML_INFERENCE_PORT:-8001}:8001"
