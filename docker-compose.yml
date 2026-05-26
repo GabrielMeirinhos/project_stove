@@ -38,8 +38,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-      ml-inference:
-        condition: service_healthy
     networks:
       - stove-net
     restart: unless-stopped
@@ -78,6 +76,8 @@ services:
     restart: unless-stopped
 
   ml-inference:
+    profiles:
+      - ml
     build:
       context: ./ml
       dockerfile: inference/Dockerfile
@@ -100,11 +100,11 @@ services:
     restart: unless-stopped
 
   ml-train:
+    profiles:
+      - ml-train
     build:
       context: ./ml
       dockerfile: Dockerfile
-    profiles:
-      - ml-train
     volumes:
       - ml-datasets:/app/datasets
       - ml-models:/app/models
