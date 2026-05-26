@@ -9,23 +9,27 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { Card } from '../ui/Card';
+import { HistoryData } from '../../types';
 
-const data = [
-  { name: 'mar', value: 30 },
-  { name: 'abr', value: 45 },
-  { name: 'mai', value: 38 },
-  { name: 'jun', value: 65 },
-  { name: 'jul', value: 55 },
-  { name: 'ago', value: 75 },
-  { name: 'set', value: 85 },
-];
+interface GrowthChartProps {
+  data: HistoryData[];
+  language?: 'pt-BR' | 'en-US';
+}
 
-export const GrowthChart: React.FC = () => {
+export const GrowthChart: React.FC<GrowthChartProps> = ({ data, language = 'pt-BR' }) => {
+  const isEnglish = language === 'en-US';
+  const chartData = data.map((item) => ({
+    name: item.day,
+    value: item.growth,
+  }));
+
+  const subtitle = chartData.length > 0 ? (isEnglish ? 'Based on received history.' : 'Baseado no historico recebido.') : (isEnglish ? 'Waiting for growth history.' : 'Aguardando historico de crescimento.');
+
   return (
-    <Card title="Analise de Crescimento" subtitle="Evolucao de 1 Mes" className="overflow-hidden">
+    <Card title={isEnglish ? 'Growth analysis' : 'Analise de Crescimento'} subtitle={subtitle} className="overflow-hidden">
       <div className="h-48 w-full mt-4 relative bg-gradient-to-b from-green-100/50 to-white dark:from-slate-900/80 dark:to-slate-900 rounded-3xl p-4 border border-slate-100 dark:border-slate-700/50">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
+          <AreaChart data={chartData}>
             <defs>
               <linearGradient id="colorGrowth" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>

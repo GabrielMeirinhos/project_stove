@@ -24,8 +24,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activeItem, setAct
     { icon: Home, value: 'Dashboard', label: isEnglish ? 'Dashboard' : 'Painel' },
     { icon: Leaf, value: 'My Plant', label: isEnglish ? 'My Plant' : 'Minha Planta' },
     { icon: Camera, value: 'Scan 3D', label: isEnglish ? 'Live Camera' : 'Camera ao Vivo' },
-    { icon: BarChart2, value: 'Analytics', label: isEnglish ? 'Analytics' : 'Analises' },
-    { icon: Settings, value: 'Settings', label: isEnglish ? 'Settings' : 'Configuracoes' },
+    { icon: BarChart2, value: 'Analytics', label: isEnglish ? 'Analytics' : 'Análises' },
+    { icon: Settings, value: 'Settings', label: isEnglish ? 'Settings' : 'Configurações' },
   ];
 
   const handleItemClick = (value: string) => {

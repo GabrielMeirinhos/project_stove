@@ -14,14 +14,16 @@ import { toast } from 'sonner';
 
 interface ChartsProps {
   data: HistoryData[];
+  language?: 'pt-BR' | 'en-US';
 }
 
-const Charts: React.FC<ChartsProps> = ({ data }) => {
+const Charts: React.FC<ChartsProps> = ({ data, language = 'pt-BR' }) => {
+  const isEnglish = language === 'en-US';
   const [activeTab, setActiveTab] = useState<'growth' | 'health'>('growth');
 
   const handleTabChange = (tab: 'growth' | 'health') => {
     setActiveTab(tab);
-    toast.info(`Visualizando: ${tab === 'growth' ? 'Crescimento' : 'Saúde'}`, {
+    toast.info(isEnglish ? `Viewing: ${tab === 'growth' ? 'Growth' : 'Health'}` : `Visualizando: ${tab === 'growth' ? 'Crescimento' : 'Saúde'}`, {
       duration: 1500,
     });
   };
@@ -37,7 +39,7 @@ const Charts: React.FC<ChartsProps> = ({ data }) => {
               activeTab === 'growth' ? "bg-green-500 text-white shadow-lg shadow-green-500/20" : "text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
           >
-            Crescimento
+            {isEnglish ? 'Growth' : 'Crescimento'}
           </button>
           <button 
             onClick={() => handleTabChange('health')}
@@ -46,10 +48,10 @@ const Charts: React.FC<ChartsProps> = ({ data }) => {
               activeTab === 'health' ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20" : "text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
             )}
           >
-            Saúde
+            {isEnglish ? 'Health' : 'Saúde'}
           </button>
         </div>
-        <div className="text-[9px] sm:text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-widest">DADOS_HISTORICOS</div>
+        <div className="text-[9px] sm:text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-widest">{isEnglish ? 'HISTORICAL_DATA' : 'DADOS_HISTORICOS'}</div>
       </div>
 
       <div className="flex-1 min-h-[180px]">
