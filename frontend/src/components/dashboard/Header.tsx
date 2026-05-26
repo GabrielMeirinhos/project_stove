@@ -23,7 +23,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ activeTab = 'My Plant', onTabChange, theme, onToggleTheme, notifications = [], language }) => {
   const isEnglish = language === 'en-US';
   const tabs = [
-    { value: 'Analytics', label: isEnglish ? 'Analytics' : 'Analises' },
+    { value: 'Analytics', label: isEnglish ? 'Analytics' : 'Análises' },
     { value: 'My Plant', label: isEnglish ? 'My Plant' : 'Minha Planta' },
   ];
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -101,8 +101,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'My Plant', onTabCha
           <button
             onClick={() => setNotificationsOpen((open) => !open)}
             className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/50 dark:bg-slate-900/60 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/60 text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-white transition-all shadow-sm relative"
-            aria-label={isEnglish ? 'Open notifications' : 'Abrir notificacoes'}
-            title={isEnglish ? 'Notifications' : 'Notificacoes'}
+            aria-label={isEnglish ? 'Open notifications' : 'Abrir notificações'}
+            title={isEnglish ? 'Notifications' : 'Notificações'}
           >
             <Bell size={20} />
             {unreadCount > 0 && (
@@ -115,14 +115,14 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'My Plant', onTabCha
           {notificationsOpen && (
             <div className="absolute right-0 mt-3 w-80 max-h-[360px] overflow-y-auto glass rounded-2xl p-3 z-[70]">
               <div className="flex items-center justify-between px-2 py-1">
-                <h3 className="text-xs font-black tracking-widest uppercase text-slate-700 dark:text-slate-200">{isEnglish ? 'Notifications' : 'Notificacoes'}</h3>
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{unreadCount} {isEnglish ? 'unread' : 'nao lidas'}</span>
+                <h3 className="text-xs font-black tracking-widest uppercase text-slate-700 dark:text-slate-200">{isEnglish ? 'Notifications' : 'Notificações'}</h3>
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{unreadCount} {isEnglish ? 'unread' : 'não lidas'}</span>
               </div>
 
               <div className="mt-2 flex flex-col gap-2">
                 {notifications.length === 0 ? (
                   <div className="rounded-xl border border-slate-100 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 px-3 py-4 text-center text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {isEnglish ? 'No notifications right now.' : 'Nenhuma notificacao no momento.'}
+                    {isEnglish ? 'No notifications right now.' : 'Nenhuma notificação no momento.'}
                   </div>
                 ) : (
                   notifications.map((item) => (

@@ -61,16 +61,6 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState('Dashboard');
   const [activeTab, setActiveTab] = useState('My Plant');
-  const [demoMode, setDemoMode] = useState<boolean>(() => {
-    if (typeof window === 'undefined') {
-      return true;
-    }
-
-    const storedDemoMode = window.localStorage.getItem('gaia-demo-mode');
-    if (storedDemoMode === 'on') return true;
-    if (storedDemoMode === 'off') return false;
-    return true;
-  });
   const [language, setLanguage] = useState<AppLanguage>(() => {
     if (typeof window === 'undefined') {
       return 'pt-BR';
@@ -99,15 +89,23 @@ export default function App() {
   const [mqttStatus, setMqttStatus] = useState<MqttStatus | null>(null);
   const [historyData, setHistoryData] = useState<HistoryData[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [demoMode, setDemoMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('gaia-demo-mode') === 'on';
+  });
 
   useEffect(() => {
     let isMounted = true;
 
-    const eventSource = api.subscribeSensorStream((event: LiveSensorEvent) => {
-      if (!isMounted) {
-        return;
-      }
+    if (demoMode) {
+      // when demoMode is active we don't subscribe to real stream
+      return () => {
+        isMounted = false;
+      };
+    }
 
+    const eventSource = api.subscribeSensorStream((event: LiveSensorEvent) => {
+      if (!isMounted) return;
       setSensorData(event.sensor);
       setMqttStatus(event.status);
     });
@@ -119,9 +117,7 @@ export default function App() {
           api.getMqttStatus(),
         ]);
 
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         setSensorData(initialSensors);
         setMqttStatus(initialStatus);
@@ -139,27 +135,24 @@ export default function App() {
       isMounted = false;
       eventSource.close();
     };
-  }, []);
+  }, [demoMode]);
 
   useEffect(() => {
     let isMounted = true;
-
     const loadHistory = async () => {
       setHistoryLoading(true);
       try {
-        const history = await api.getHistory();
-        if (!isMounted) {
+        if (demoMode) {
+          // demo mode will populate history separately
           return;
         }
+        const history = await api.getHistory();
+        if (!isMounted) return;
         setHistoryData(history);
       } catch {
-        if (isMounted) {
-          setHistoryData([]);
-        }
+        if (isMounted) setHistoryData([]);
       } finally {
-        if (isMounted) {
-          setHistoryLoading(false);
-        }
+        if (isMounted) setHistoryLoading(false);
       }
     };
 
@@ -168,29 +161,20 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle('dark', theme === 'dark');
-    root.style.colorScheme = theme;
-    window.localStorage.setItem('gaia-theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    window.localStorage.setItem('gaia-language', language);
-  }, [language]);
-
-  useEffect(() => {
-    window.localStorage.setItem('gaia-demo-mode', demoMode ? 'on' : 'off');
   }, [demoMode]);
 
   useEffect(() => {
-    if (!demoMode) {
-      return;
+    // persist demo mode preference
+    try {
+      window.localStorage.setItem('gaia-demo-mode', demoMode ? 'on' : 'off');
+    } catch {
+      // ignore
     }
+  }, [demoMode]);
 
+  useEffect(() => {
     let tick = 0;
+    let intervalId: number | undefined;
 
     const applyMockData = () => {
       const mockSensor = generateMockSensor(tick);
@@ -208,13 +192,44 @@ export default function App() {
       tick += 1;
     };
 
-    applyMockData();
-    const intervalId = window.setInterval(applyMockData, 5000);
+    if (demoMode) {
+      applyMockData();
+      intervalId = window.setInterval(applyMockData, 5000) as unknown as number;
+    } else {
+      // when disabling demo, reload real data
+      (async () => {
+        try {
+          const [initialSensors, initialStatus, history] = await Promise.all([
+            api.getSensors(),
+            api.getMqttStatus(),
+            api.getHistory(),
+          ]);
+          setSensorData(initialSensors);
+          setMqttStatus(initialStatus);
+          setHistoryData(history);
+        } catch {
+          setSensorData(null);
+          setMqttStatus(null);
+          setHistoryData([]);
+        }
+      })();
+    }
 
     return () => {
-      window.clearInterval(intervalId);
+      if (intervalId) window.clearInterval(intervalId);
     };
   }, [demoMode]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('dark', theme === 'dark');
+    root.style.colorScheme = theme;
+    window.localStorage.setItem('gaia-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    window.localStorage.setItem('gaia-language', language);
+  }, [language]);
 
   const toggleTheme = () => {
     setTheme((currentTheme) => (currentTheme === 'light' ? 'dark' : 'light'));
@@ -248,8 +263,8 @@ export default function App() {
     if (view === 'Dashboard') return isEnglish ? 'Dashboard' : 'Painel';
     if (view === 'My Plant') return isEnglish ? 'My Plant' : 'Minha Planta';
     if (view === 'Scan 3D') return isEnglish ? 'Live Camera' : 'Camera ao Vivo';
-    if (view === 'Analytics') return isEnglish ? 'Analytics' : 'Analises';
-    if (view === 'Settings') return isEnglish ? 'Settings' : 'Configuracoes';
+    if (view === 'Analytics') return isEnglish ? 'Analytics' : 'Análises';
+    if (view === 'Settings') return isEnglish ? 'Settings' : 'Configurações';
     return view;
   };
 
@@ -285,7 +300,7 @@ export default function App() {
           : `Recebendo leituras em tempo real. Ultima atualizacao as ${lastUpdatedAt}.`
         : isEnglish
           ? 'No broker connection. Check network and credentials to resume readings.'
-          : 'Sem conexao com o broker. Verifique rede e credenciais para retomar leituras.',
+          : 'Sem conexão com o broker. Verifique rede e credenciais para retomar leituras.',
       time: lastUpdatedAt,
       severity: (mqttStatus?.connected ? 'success' : 'warning') as const,
       unread: !mqttStatus?.connected,
@@ -313,7 +328,7 @@ export default function App() {
           : `Indice atual em ${Math.round(sensorData.health)}%. Tendencia media recente: ${avgHealth}%.`
         : isEnglish
           ? 'No health data at the moment.'
-          : 'Sem dados de saude no momento.',
+          : 'Sem dados de saúde no momento.',
       time: lastUpdatedAt,
       severity: sensorData && sensorData.health < 70 ? 'warning' : 'success',
       unread: Boolean(sensorData && sensorData.health < 70),
@@ -359,7 +374,7 @@ export default function App() {
 
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300/70 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold uppercase tracking-widest">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  {demoMode ? (isEnglish ? 'Presentation mode active' : 'Modo apresentacao ativo') : (isEnglish ? 'Live mode' : 'Modo ao vivo')}
+                  {isEnglish ? 'Live mode' : 'Modo ao vivo'}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
@@ -391,8 +406,8 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <CurrentStatus data={sensorData} mqttStatus={mqttStatus} />
-                <Alerts />
+                <CurrentStatus data={sensorData} mqttStatus={mqttStatus} language={language} />
+                <Alerts data={sensorData} language={language} />
               </div>
 
               <div className="glass rounded-[32px] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -410,9 +425,18 @@ export default function App() {
             </div>
 
             <div className="lg:col-span-4 flex flex-col gap-8">
-              <GrowthChart />
-              <EnvironmentalData data={sensorData} />
-              <RecentActivity />
+              <GrowthChart data={historyData} language={language} />
+              <EnvironmentalData data={sensorData} language={language} />
+              <RecentActivity
+                data={sensorData}
+                mqttStatus={mqttStatus}
+                language={language}
+                historyAverage={historyData.length ? {
+                  growth: avgGrowth,
+                  moisture: avgMoisture,
+                  health: avgHealth,
+                } : undefined}
+              />
             </div>
           </main>
         ) : activeView === 'My Plant' ? (
@@ -429,7 +453,7 @@ export default function App() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <Timeline day={day} setDay={setDay} />
+                <Timeline day={day} setDay={setDay} language={language} />
                 <MiniVisual />
               </div>
 
@@ -463,9 +487,18 @@ export default function App() {
             </div>
 
             <div className="lg:col-span-4 flex flex-col gap-8">
-              <GrowthChart />
-              <CurrentStatus data={sensorData} mqttStatus={mqttStatus} />
-              <RecentActivity />
+              <GrowthChart data={historyData} language={language} />
+              <CurrentStatus data={sensorData} mqttStatus={mqttStatus} language={language} />
+              <RecentActivity
+                data={sensorData}
+                mqttStatus={mqttStatus}
+                language={language}
+                historyAverage={historyData.length ? {
+                  growth: avgGrowth,
+                  moisture: avgMoisture,
+                  health: avgHealth,
+                } : undefined}
+              />
             </div>
           </main>
         ) : activeView === 'Analytics' ? (
@@ -502,7 +535,7 @@ export default function App() {
                     {isEnglish ? 'Loading analytics history...' : 'Carregando historico de analises...'}
                   </div>
                 ) : historyData.length > 0 ? (
-                  <Charts data={historyData} />
+                  <Charts data={historyData} language={language} />
                 ) : (
                   <div className="h-full min-h-[300px] flex items-center justify-center text-sm font-medium text-slate-500 dark:text-slate-400">
                     {isEnglish ? 'No historical data available right now.' : 'Nenhum dado historico disponivel no momento.'}
@@ -510,13 +543,13 @@ export default function App() {
                 )}
               </div>
 
-              <EnvironmentalData data={sensorData} />
+              <EnvironmentalData data={sensorData} language={language} />
             </div>
 
             <div className="lg:col-span-4 flex flex-col gap-8">
-              <CurrentStatus data={sensorData} mqttStatus={mqttStatus} />
-              <GrowthChart />
-              <Alerts />
+              <CurrentStatus data={sensorData} mqttStatus={mqttStatus} language={language} />
+              <GrowthChart data={historyData} language={language} />
+              <Alerts data={sensorData} language={language} />
             </div>
           </main>
         ) : activeView === 'Scan 3D' ? (
@@ -545,7 +578,7 @@ export default function App() {
                       onClick={() => setLanguage('pt-BR')}
                       className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${language === 'pt-BR' ? 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white'}`}
                     >
-                      Portugues (BR)
+                      {isEnglish ? 'Portuguese (BR)' : 'Português (BR)'}
                     </button>
                     <button
                       onClick={() => setLanguage('en-US')}
@@ -577,6 +610,7 @@ export default function App() {
                     </button>
                   </div>
                 </div>
+
               </div>
             </div>
 
@@ -603,8 +637,8 @@ export default function App() {
         ) : (
           <div className="flex-1 flex items-center justify-center glass rounded-[24px]">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Modulo {getViewLabel(activeView)}</h2>
-              <p className="text-slate-500 dark:text-slate-300">{isEnglish ? 'This feature is under development.' : 'Esta funcionalidade esta em desenvolvimento.'}</p>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">{isEnglish ? 'Module' : 'Módulo'} {getViewLabel(activeView)}</h2>
+              <p className="text-slate-500 dark:text-slate-300">{isEnglish ? 'This feature is under development.' : 'Esta funcionalidade está em desenvolvimento.'}</p>
             </div>
           </div>
         )}

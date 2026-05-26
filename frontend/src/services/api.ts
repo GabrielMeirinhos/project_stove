@@ -1,5 +1,101 @@
 import { SensorData, HistoryData, LiveSensorEvent, MqttStatus, PlantAnalysis } from '../types';
 
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000/api/v1';
+
+type BackendSensorReading = {
+  soil_moisture_percent?: number | null;
+  humidity_percent?: number | null;
+  temperature_celsius?: number | null;
+  light_lux?: number | null;
+  status?: 'normal' | 'warning' | 'critical';
+  recorded_at: string;
+};
+
+const roundValue = (value: number) => Math.round(value);
+
+const formatDayLabel = (date: Date) =>
+  date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+const clampToPercentage = (value: number) => Math.min(100, Math.max(0, value));
+
+const normalizeReadingValue = (value: number | null | undefined) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return null;
+  }
+
+  return value;
+};
+
+const buildHistoryFromReadings = (readings: BackendSensorReading[]): HistoryData[] => {
+  const byDay = new Map<
+    string,
+    {
+      label: string;
+      moistureValues: number[];
+      humidityValues: number[];
+      normalCount: number;
+      totalCount: number;
+    }
+  >();
+
+  readings.forEach((reading) => {
+    const recordedAt = new Date(reading.recorded_at);
+    if (Number.isNaN(recordedAt.getTime())) {
+      return;
+    }
+
+    const dayKey = recordedAt.toISOString().slice(0, 10);
+    const existing = byDay.get(dayKey) ?? {
+      label: formatDayLabel(recordedAt),
+      moistureValues: [],
+      humidityValues: [],
+      normalCount: 0,
+      totalCount: 0,
+    };
+
+    const soilMoisture = normalizeReadingValue(reading.soil_moisture_percent);
+    const humidity = normalizeReadingValue(reading.humidity_percent);
+
+    if (soilMoisture !== null) {
+      existing.moistureValues.push(soilMoisture);
+    }
+
+    if (humidity !== null) {
+      existing.humidityValues.push(humidity);
+    }
+
+    existing.totalCount += 1;
+    if (reading.status === 'normal') {
+      existing.normalCount += 1;
+    }
+
+    byDay.set(dayKey, existing);
+  });
+
+  return Array.from(byDay.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .slice(-7)
+    .map(([, bucket]) => {
+      const averageMoisture = bucket.moistureValues.length
+        ? bucket.moistureValues.reduce((sum, value) => sum + value, 0) / bucket.moistureValues.length
+        : 0;
+
+      const averageHumidity = bucket.humidityValues.length
+        ? bucket.humidityValues.reduce((sum, value) => sum + value, 0) / bucket.humidityValues.length
+        : averageMoisture;
+
+      const growthScore = clampToPercentage(averageMoisture);
+      const healthScore = bucket.totalCount > 0 ? (bucket.normalCount / bucket.totalCount) * 100 : 0;
+
+      return {
+        day: bucket.label,
+        growth: roundValue(growthScore),
+        moisture: roundValue(averageHumidity),
+        health: roundValue(healthScore),
+      };
+    });
+};
+
 export const api = {
   async getSensors(): Promise<SensorData | null> {
     const res = await fetch('/api/dados');
@@ -14,9 +110,14 @@ export const api = {
   },
 
   async getHistory(): Promise<HistoryData[]> {
-    const res = await fetch('/api/historico');
+    const url = new URL(`${BACKEND_BASE_URL}/sensor-readings`);
+    url.searchParams.set('limit', '1000');
+
+    const res = await fetch(url.toString());
     if (!res.ok) throw new Error('Falha ao buscar historico');
-    return res.json();
+
+    const readings = (await res.json()) as BackendSensorReading[];
+    return buildHistoryFromReadings(readings);
   },
 
   async getModelInfo(day: number) {

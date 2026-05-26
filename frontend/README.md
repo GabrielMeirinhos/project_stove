@@ -45,6 +45,22 @@ O aplicativo atual apresenta:
 
 O comando `npm run dev` sobe o servidor Express em `http://localhost:3000` e injeta o Vite em modo middleware.
 
+## Ambiente
+
+O front lê as variáveis do arquivo `.env` na raiz de `front/`.
+
+As chaves relevantes para MQTT são:
+
+- `MQTT_HOST` ou `MQTT_BROKER_HOST`
+- `MQTT_PORT` ou `MQTT_BROKER_PORT`
+- `MQTT_USER` ou `MQTT_USERNAME`
+- `MQTT_PASSWORD`
+- `MQTT_TOPIC_PREFIX` (padrão `gaia`)
+- `MQTT_TOPIC` para sobrescrever a assinatura inteira, se necessário
+- `MQTT_USE_TLS` (padrão `true`)
+
+Se você usar apenas as variáveis que o backend fornece, o front já consegue conectar no broker HiveMQ Cloud e assinar `gaia/#` por padrão.
+
 ### Outros comandos
 
 ```bash

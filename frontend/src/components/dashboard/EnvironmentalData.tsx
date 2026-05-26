@@ -19,6 +19,7 @@ interface MiniChartProps {
 
 interface EnvironmentalDataProps {
   data?: SensorData | null;
+  language?: 'pt-BR' | 'en-US';
 }
 
 const MiniChart: React.FC<MiniChartProps> = ({ title, value, data, color, icon: Icon }) => {
@@ -60,22 +61,23 @@ const buildTrend = (baseValue: number, spread: number) => {
   ];
 };
 
-export const EnvironmentalData: React.FC<EnvironmentalDataProps> = ({ data }) => {
+export const EnvironmentalData: React.FC<EnvironmentalDataProps> = ({ data, language = 'pt-BR' }) => {
+  const isEnglish = language === 'en-US';
   const hasData = Boolean(data);
   const moistureSeries = hasData && data ? buildTrend(data.moisture, 6) : [];
   const temperatureSeries = hasData && data ? buildTrend(data.temperature, 2) : [];
 
   return (
-    <Card title="Dados Ambientais" subtitle="Resumo ao vivo dos sensores." className="flex flex-col gap-4">
+    <Card title={isEnglish ? 'Environmental data' : 'Dados Ambientais'} subtitle={isEnglish ? 'Live sensor summary.' : 'Resumo ao vivo dos sensores.'} className="flex flex-col gap-4">
       <MiniChart
-        title="Niveis de Umidade"
+        title={isEnglish ? 'Moisture levels' : 'Niveis de Umidade'}
         value={hasData && data ? `${Math.round(data.moisture)}%` : '--'}
         data={moistureSeries}
         color="#3b82f6"
         icon={TrendingDown}
       />
       <MiniChart
-        title="Temperature"
+        title={isEnglish ? 'Temperature' : 'Temperatura'}
         value={hasData && data ? `${data.temperature.toFixed(1)}°C` : '--'}
         data={temperatureSeries}
         color="#ef4444"
