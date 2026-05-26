@@ -1,0 +1,26 @@
+# Development overrides — applied automatically by `docker compose up`
+# Hot-reload via volume mounts; no production build step needed.
+services:
+  frontend:
+    build:
+      target: deps
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+      DISABLE_HMR: "false"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+
+  backend:
+    command: python run.py
+    environment:
+      RELOAD: "true"
+    volumes:
+      - ./backend:/app
+    # Relax healthcheck timing in dev
+    healthcheck:
+      start_period: 5s
+      interval: 10s

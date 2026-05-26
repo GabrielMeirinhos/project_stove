@@ -214,13 +214,41 @@ async function startServer() {
     res.json(history);
   });
 
-  app.post("/api/analyze-image", (req, res) => {
-    res.json({
-      plantArea: "1540px",
-      estimatedHeight: "24cm",
-      healthScore: 92,
-      anomalies: [],
-    });
+  const ML_INFERENCE_URL = process.env.ML_INFERENCE_URL ?? "http://localhost:8001";
+
+  app.post("/api/analyze-image", async (req, res) => {
+    const { image_b64 } = req.body as { image_b64?: string };
+    if (!image_b64) {
+      res.status(400).json({ error: "image_b64 obrigatório" });
+      return;
+    }
+
+    try {
+      const mlRes = await fetch(`${ML_INFERENCE_URL}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_b64 }),
+        signal: AbortSignal.timeout(15_000),
+      });
+
+      if (!mlRes.ok) {
+        const text = await mlRes.text();
+        res.status(mlRes.status).json({ error: text });
+        return;
+      }
+
+      const result = await mlRes.json();
+      res.json(result);
+    } catch (err) {
+      console.error("ML inference error:", err);
+      // Fallback: retorna mock para não travar o frontend
+      res.json({
+        top_prediction: { class: "Servico_indisponivel", confidence: 0 },
+        top_k: [{ class: "Servico_indisponivel", confidence: 0 }],
+        inference_ms: 0,
+        mock: true,
+      });
+    }
   });
 
   if (process.env.NODE_ENV !== "production") {

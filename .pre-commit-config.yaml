@@ -1,0 +1,50 @@
+repos:
+  # ---------------------------------------------------------------------------
+  # General
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch, main]
+
+  # ---------------------------------------------------------------------------
+  # Python (backend + ml)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^(backend|ml)/
+      - id: ruff-format
+        files: ^(backend|ml)/
+
+  # ---------------------------------------------------------------------------
+  # TypeScript / JavaScript (frontend)
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: tsc
+        name: TypeScript type-check
+        language: node
+        entry: bash -c "cd frontend && npm run lint"
+        files: ^frontend/.*\.(ts|tsx)$
+        pass_filenames: false
+
+  # ---------------------------------------------------------------------------
+  # Secrets scanning
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: .env.example

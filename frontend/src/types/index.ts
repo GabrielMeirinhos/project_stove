@@ -33,3 +33,15 @@ export interface LiveSensorEvent {
   sensor: SensorData | null;
   status: MqttStatus;
 }
+
+export interface PlantPrediction {
+  class: string;
+  confidence: number;
+}
+
+export interface PlantAnalysis {
+  top_prediction: PlantPrediction;
+  top_k: PlantPrediction[];
+  inference_ms: number;
+  mock: boolean;
+}

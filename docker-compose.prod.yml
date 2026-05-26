@@ -1,0 +1,15 @@
+# Production overrides — apply with: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  frontend:
+    build:
+      target: runner
+    environment:
+      NODE_ENV: production
+    restart: always
+
+  backend:
+    restart: always
+    environment:
+      RELOAD: "false"
+
+  # No volume mounts in prod — baked into image

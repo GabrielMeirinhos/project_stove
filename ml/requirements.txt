@@ -1,0 +1,13 @@
+tensorflow
+opencv-python
+scikit-learn
+matplotlib
+seaborn
+kagglehub
+numpy
+# tensorflow-addons (opcional)
+
+# Inference microservice
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2

@@ -1,0 +1,12 @@
+__pycache__
+*.py[cod]
+venv
+.venv
+datasets/
+models/
+checkpoints/
+outputs/
+*.h5
+*.keras
+*.tflite
+*.log

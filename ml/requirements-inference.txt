@@ -1,0 +1,8 @@
+# Runtime de inferência TFLite (substituto leve do tensorflow completo)
+# ai-edge-litert é o pacote oficial Google para Python 3.12+
+ai-edge-litert
+opencv-python-headless
+numpy
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2

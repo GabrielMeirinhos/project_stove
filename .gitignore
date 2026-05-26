@@ -1,33 +1,83 @@
-# Segredos
+# =============================================================================
+# Environment & Secrets
+# =============================================================================
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
+# =============================================================================
 # Python
+# =============================================================================
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
+*.pyd
 *.so
-.venv/
-venv/
-env/
+*.egg
+*.egg-info/
+build/
+.eggs/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
-*.egg-info/
-build/
-dist/
+venv/
+.venv/
+env/
 
-# IDE / editores
+# =============================================================================
+# ML Artifacts (arquivos pesados — nunca commitar)
+# =============================================================================
+ml/datasets/
+ml/models/
+ml/checkpoints/
+ml/outputs/models/
+ml/outputs/logs/
+ml/outputs/plots/
+# Paths legados (pré-reorganização)
+outputs/
+**/PlantVillage/
+**/plantvillage/
+.kaggle/
+*.keras
+*.h5
+*.tflite
+*.pb
+saved_model/
+capture_*.jpg
+capture_*.png
+
+# Manter métricas (pequenas, úteis para comparar experimentos)
+!ml/outputs/config.json
+!ml/outputs/test_metrics.json
+!ml/outputs/classification_report.txt
+
+# =============================================================================
+# Node / Frontend
+# =============================================================================
+node_modules/
+frontend/dist/
+frontend/.cache/
+*.tsbuildinfo
+
+# =============================================================================
+# Docker
+# =============================================================================
+.docker/
+
+# =============================================================================
+# IDEs
+# =============================================================================
 .vscode/
 .idea/
-*.swp
+*.code-workspace
+.claude/settings.local.json
 
+# =============================================================================
 # OS
+# =============================================================================
 .DS_Store
 Thumbs.db
-
-# Claude Code (configurações locais por desenvolvedor)
-.claude/
+desktop.ini
+ehthumbs.db

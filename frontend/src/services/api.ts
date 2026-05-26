@@ -1,4 +1,4 @@
-import { SensorData, HistoryData, LiveSensorEvent, MqttStatus } from '../types';
+import { SensorData, HistoryData, LiveSensorEvent, MqttStatus, PlantAnalysis } from '../types';
 
 export const api = {
   async getSensors(): Promise<SensorData | null> {
@@ -22,6 +22,16 @@ export const api = {
   async getModelInfo(day: number) {
     const res = await fetch(`/api/modelo-atual?day=${day}`);
     if (!res.ok) throw new Error('Falha ao buscar informacoes do modelo');
+    return res.json();
+  },
+
+  async analyzeImage(imageB64: string): Promise<PlantAnalysis> {
+    const res = await fetch('/api/analyze-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image_b64: imageB64 }),
+    });
+    if (!res.ok) throw new Error('Falha na análise de imagem');
     return res.json();
   },
 

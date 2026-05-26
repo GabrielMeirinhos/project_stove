@@ -1,0 +1,129 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: "${PGDATABASE:-stovedb}"
+      POSTGRES_USER: "${PGUSER:-stove}"
+      POSTGRES_PASSWORD: "${PGPASSWORD:-stove}"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/SQL/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-stove} -d ${PGDATABASE:-stovedb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - stove-net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      APP_URL: "${APP_URL:-http://localhost:3000}"
+      MQTT_HOST: "${MQTT_HOST}"
+      MQTT_PORT: "${MQTT_PORT:-8883}"
+      MQTT_USER: "${MQTT_USER}"
+      MQTT_PASSWORD: "${MQTT_PASSWORD}"
+      MQTT_USE_TLS: "${MQTT_USE_TLS:-true}"
+      MQTT_TOPIC_PREFIX: "${MQTT_TOPIC_PREFIX:-gaia}"
+      ML_INFERENCE_URL: "http://ml-inference:8001"
+    depends_on:
+      backend:
+        condition: service_healthy
+      ml-inference:
+        condition: service_healthy
+    networks:
+      - stove-net
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      PGHOST: "${PGHOST:-postgres}"
+      PGDATABASE: "${PGDATABASE:-stovedb}"
+      PGUSER: "${PGUSER:-stove}"
+      PGPASSWORD: "${PGPASSWORD:-stove}"
+      PGSSLMODE: "${PGSSLMODE:-disable}"
+      PGCHANNELBINDING: "${PGCHANNELBINDING:-disable}"
+      MQTT_HOST: "${MQTT_HOST}"
+      MQTT_PORT: "${MQTT_PORT:-8883}"
+      MQTT_USER: "${MQTT_USER}"
+      MQTT_PASSWORD: "${MQTT_PASSWORD}"
+      MQTT_USE_TLS: "${MQTT_USE_TLS:-true}"
+      MQTT_CLIENT_ID: "${MQTT_CLIENT_ID:-gaia-backend}"
+      MQTT_TOPIC_PREFIX: "${MQTT_TOPIC_PREFIX:-gaia}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/plants', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - stove-net
+    restart: unless-stopped
+
+  ml-inference:
+    build:
+      context: ./ml
+      dockerfile: inference/Dockerfile
+    command: ["uvicorn", "inference.server:app", "--host", "0.0.0.0", "--port", "8001"]
+    ports:
+      - "${ML_INFERENCE_PORT:-8001}:8001"
+    volumes:
+      - ml-models:/app/models
+    environment:
+      MODEL_PATH: "models/model_int8.tflite"
+      LABELS_PATH: "models/labels.json"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - stove-net
+    restart: unless-stopped
+
+  ml-train:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    profiles:
+      - ml-train
+    volumes:
+      - ml-datasets:/app/datasets
+      - ml-models:/app/models
+      - ml-checkpoints:/app/checkpoints
+      - ml-outputs:/app/outputs
+    environment:
+      KAGGLE_USERNAME: "${KAGGLE_USERNAME:-}"
+      KAGGLE_KEY: "${KAGGLE_KEY:-}"
+    networks:
+      - stove-net
+    restart: "no"
+
+networks:
+  stove-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  ml-datasets:
+  ml-models:
+  ml-checkpoints:
+  ml-outputs:
