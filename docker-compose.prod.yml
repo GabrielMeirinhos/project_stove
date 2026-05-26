@@ -1,15 +1,81 @@
-# Production overrides — apply with: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Compose para produção (Coolify). Sem ports: — o proxy do Coolify (Traefik)
+# roteia o tráfego externo. Configure este arquivo no painel do Coolify.
 services:
-  frontend:
-    build:
-      target: runner
+  postgres:
+    image: postgres:16-alpine
     environment:
-      NODE_ENV: production
-    restart: always
+      POSTGRES_DB: "${PGDATABASE:-stovedb}"
+      POSTGRES_USER: "${PGUSER:-stove}"
+      POSTGRES_PASSWORD: "${PGPASSWORD:-stove}"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/SQL/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks:
+      - stove-net
+    restart: unless-stopped
 
   backend:
-    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     environment:
-      RELOAD: "false"
+      PGHOST: "${PGHOST:-postgres}"
+      PGDATABASE: "${PGDATABASE:-stovedb}"
+      PGUSER: "${PGUSER:-stove}"
+      PGPASSWORD: "${PGPASSWORD:-stove}"
+      PGSSLMODE: "${PGSSLMODE:-disable}"
+      PGCHANNELBINDING: "${PGCHANNELBINDING:-disable}"
+      MQTT_HOST: "${MQTT_HOST}"
+      MQTT_PORT: "${MQTT_PORT:-8883}"
+      MQTT_USER: "${MQTT_USER}"
+      MQTT_PASSWORD: "${MQTT_PASSWORD}"
+      MQTT_USE_TLS: "${MQTT_USE_TLS:-true}"
+      MQTT_CLIENT_ID: "${MQTT_CLIENT_ID:-gaia-backend}"
+      MQTT_TOPIC_PREFIX: "${MQTT_TOPIC_PREFIX:-gaia}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/plants', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - stove-net
+    restart: unless-stopped
 
-  # No volume mounts in prod — baked into image
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      GEMINI_API_KEY: "${GEMINI_API_KEY}"
+      APP_URL: "${APP_URL}"
+      MQTT_HOST: "${MQTT_HOST}"
+      MQTT_PORT: "${MQTT_PORT:-8883}"
+      MQTT_USER: "${MQTT_USER}"
+      MQTT_PASSWORD: "${MQTT_PASSWORD}"
+      MQTT_USE_TLS: "${MQTT_USE_TLS:-true}"
+      MQTT_TOPIC_PREFIX: "${MQTT_TOPIC_PREFIX:-gaia}"
+      ML_INFERENCE_URL: "${ML_INFERENCE_URL:-http://ml-inference:8001}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - stove-net
+    restart: unless-stopped
+
+networks:
+  stove-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
