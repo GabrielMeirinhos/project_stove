@@ -9,11 +9,11 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./backend/SQL/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-stove} -d ${PGDATABASE:-stovedb}"]
-      interval: 10s
+      test: ["CMD", "pg_isready", "-q"]
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 20
+      start_period: 30s
     networks:
       - stove-net
     restart: unless-stopped
