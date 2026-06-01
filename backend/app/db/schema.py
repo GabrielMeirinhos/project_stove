@@ -15,7 +15,7 @@ from app.db.connection import get_pool
 
 logger = logging.getLogger(__name__)
 
-_SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "sql" / "schema.sql"
+_SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "SQL" / "schema.sql"
 
 
 def _plant_table_exists() -> bool:
