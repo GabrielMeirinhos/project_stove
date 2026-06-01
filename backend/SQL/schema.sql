@@ -1,5 +1,13 @@
 -- Schema PostgreSQL do projeto
 
+CREATE TABLE IF NOT EXISTS users (
+    id uuid PRIMARY KEY,
+    username varchar(50) NOT NULL UNIQUE,
+    hashed_password text NOT NULL,
+    is_active boolean NOT NULL DEFAULT TRUE,
+    created_at timestamptz NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS plant (
     id uuid PRIMARY KEY,
     common_name varchar(100) NOT NULL,

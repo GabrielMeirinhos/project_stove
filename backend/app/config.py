@@ -68,3 +68,11 @@ MQTT_USE_TLS = os.getenv("MQTT_USE_TLS", "true").lower() == "true"
 MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID", "gaia-backend")
 MQTT_KEEPALIVE = int(os.getenv("MQTT_KEEPALIVE", "60"))
 MQTT_TOPIC_PREFIX = os.getenv("MQTT_TOPIC_PREFIX", "gaia")
+
+# ---------------------------------------------------------------------------
+# JWT / Autenticação
+# ---------------------------------------------------------------------------
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")

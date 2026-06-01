@@ -38,11 +38,15 @@ services:
       MQTT_USE_TLS: "${MQTT_USE_TLS:-true}"
       MQTT_CLIENT_ID: "${MQTT_CLIENT_ID:-gaia-backend}"
       MQTT_TOPIC_PREFIX: "${MQTT_TOPIC_PREFIX:-gaia}"
+      SECRET_KEY: "${SECRET_KEY}"
+      ACCESS_TOKEN_EXPIRE_MINUTES: "${ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
+      ADMIN_USERNAME: "${ADMIN_USERNAME}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD}"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/plants', timeout=5)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
