@@ -1,6 +1,6 @@
 import { SensorData, HistoryData, LiveSensorEvent, MqttStatus, PlantAnalysis } from '../types';
 
-const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000/api/v1';
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? '/api/v1';
 const AUTH_BASE_URL = import.meta.env.VITE_AUTH_API_URL ?? '/api';
 
 export type AuthRole = 'admin' | 'user';
@@ -172,11 +172,10 @@ export const api = {
     return res.json();
   },
 
-  async getHistory(): Promise<HistoryData[]> {
-    const url = new URL(`${BACKEND_BASE_URL}/sensor-readings`);
-    url.searchParams.set('limit', '1000');
-
-    const res = await fetch(url.toString());
+  async getHistory(token?: string): Promise<HistoryData[]> {
+    const res = await fetch(`${BACKEND_BASE_URL}/sensor-readings?limit=1000`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
     if (!res.ok) throw new Error('Falha ao buscar historico');
 
     const readings = (await res.json()) as BackendSensorReading[];

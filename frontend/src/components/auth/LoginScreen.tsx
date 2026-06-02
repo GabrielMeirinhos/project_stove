@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Apple, ArrowRight, Eye, EyeOff, Leaf, LockKeyhole, Mail, MoonStar, SunMedium } from 'lucide-react';
+import { Apple, ArrowRight, Eye, EyeOff, Leaf, LockKeyhole, MoonStar, SunMedium, User } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import loginGreenhouse from '../../assents/login-greenhouse.png';
 
@@ -18,7 +18,7 @@ const copy = {
     brand: 'Gaia',
     subtitle: 'Monitore sua planta com calma e precisão.',
     welcome: 'Bem vindo',
-    email: 'Endereço de e-mail',
+    email: 'Usuário',
     password: 'Senha',
     rememberMe: 'Manter acesso neste dispositivo',
     forgot: 'Esqueceu a senha?',
@@ -38,7 +38,7 @@ const copy = {
     brand: 'Gaia',
     subtitle: 'Monitor your real plant with calm and precision.',
     welcome: 'Welcome',
-    email: 'Email address',
+    email: 'Username',
     password: 'Password',
     rememberMe: 'Keep me signed in on this device',
     forgot: 'Forgot Password?',
@@ -57,8 +57,8 @@ const copy = {
 } as const;
 
 export function LoginScreen({ language, theme, onToggleTheme, onLogin }: LoginScreenProps) {
-  const [email, setEmail] = useState('demo@gaia.local');
-  const [password, setPassword] = useState('gaia123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,13 +130,14 @@ export function LoginScreen({ language, theme, onToggleTheme, onLogin }: LoginSc
                   {content.email}
                 </span>
                 <div className="group relative">
-                  <Mail size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7d8884]" />
+                  <User size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#7d8884]" />
                   <input
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     className="h-[3.1rem] w-full rounded-full bg-[#dde4e1] pl-11 pr-4 text-sm text-[#1f2f27] outline-none transition-all placeholder:text-[#9aa59f] focus:bg-[#ffffff] focus:shadow-[0_12px_24px_rgba(45,52,50,0.08)]"
-                    placeholder={isEnglish ? 'name@example.com' : 'nome@exemplo.com'}
+                    placeholder={isEnglish ? 'username' : 'nome_de_usuario'}
+                    autoComplete="username"
                   />
                   <div className="pointer-events-none absolute inset-0 rounded-full bg-[linear-gradient(15deg,rgba(73,102,75,0.08),rgba(202,235,201,0.03))] opacity-0 transition-opacity group-focus-within:opacity-100" />
                 </div>
