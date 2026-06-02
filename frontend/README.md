@@ -1,101 +1,140 @@
-# Gaia Monitoring System
+# Frontend — Gaia Monitoring Dashboard
 
-Interface experimental de monitoramento para plantas, com visualização procedural, indicadores ambientais, histórico de crescimento e fluxo de escaneamento 3D. O projeto combina React, Vite, Express e componentes visuais para simular um painel de operação da plataforma Gaia.
+Dashboard de monitoramento de estufa em tempo real com visualização procedural de plantas, métricas ambientais, histórico de crescimento e análise de imagens via ML.
 
-## Visão geral
+---
 
-O aplicativo atual apresenta:
+## Stack
 
-- um dashboard principal com visual da planta procedural e linha do tempo de crescimento;
-- cartões de status com condições de luz, solo, umidade e fertilização;
-- gráficos de crescimento e histórico de saúde;
-- uma área de alertas e atividade recente;
-- uma tela de scan 3D com câmera, captura sequencial de imagens e progresso simulado;
+- **React 19** + **TypeScript**
+- **Vite** — bundler (build de produção)
+- **Express** — servidor Node.js que serve o app e integra MQTT/SSE
+- **Tailwind CSS** — estilização
+- **Recharts** — gráficos
+- **React Three Fiber / Three.js** — visualização 3D procedural
+- **Framer Motion** — animações
+- **@google/genai** — integração Gemini (feature futura)
 
-## Tecnologias
+---
 
-- React 19
-- TypeScript
-- Vite
-- Express
-- Tailwind CSS
-- Recharts
-- Framer Motion
-- React Three Fiber e Three.js
-- Sonner para notificações
+## Arquitetura
 
-## Como executar
+O frontend roda como um **servidor Express** que:
 
-### Pré-requisitos
+1. Em desenvolvimento: serve o app via middleware Vite (hot-reload)
+2. Em produção: serve os arquivos estáticos buildados em `dist/`
+3. Conecta ao broker MQTT e expõe dados de sensor via **SSE** (`/api/live/stream`)
+4. Faz proxy de análise de imagem para o serviço de ML
 
-- Node.js 18 ou superior
-- npm
+O React consome APIs do próprio servidor Express (`/api/...`) — não há chamada direta do browser ao backend Python, exceto `getHistory()` que usa `VITE_BACKEND_URL`.
 
-### Instalação
+---
 
-1. Instale as dependências.
-   ```bash
-   npm install
-   ```
+## Execução local
 
-2. Inicie o ambiente local.
-   ```bash
-   npm run dev
-   ```
+### Com Docker (recomendado)
 
-O comando `npm run dev` sobe o servidor Express em `http://localhost:3000` e injeta o Vite em modo middleware.
+```bash
+# Na raiz do projeto
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d frontend
+```
 
-## Ambiente
+O container usa hot-reload via volume mount. Disponível em `http://localhost:3000`.
 
-O front lê as variáveis do arquivo `.env` na raiz de `front/`.
+### Sem Docker
 
-As chaves relevantes para MQTT são:
-
-- `MQTT_HOST` ou `MQTT_BROKER_HOST`
-- `MQTT_PORT` ou `MQTT_BROKER_PORT`
-- `MQTT_USER` ou `MQTT_USERNAME`
-- `MQTT_PASSWORD`
-- `MQTT_TOPIC_PREFIX` (padrão `gaia`)
-- `MQTT_TOPIC` para sobrescrever a assinatura inteira, se necessário
-- `MQTT_USE_TLS` (padrão `true`)
-
-Se você usar apenas as variáveis que o backend fornece, o front já consegue conectar no broker HiveMQ Cloud e assinar `gaia/#` por padrão.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ### Outros comandos
 
 ```bash
-npm run build
-npm run preview
-npm run lint
-npm run clean
+npm run build      # build de produção
+npm run preview    # preview do build
+npm run lint       # lint TypeScript
 ```
 
-## Funcionalidades principais
+---
 
-- Dashboard com navegação lateral e alternância entre módulos.
-- Visual procedural da planta com controle de dia de crescimento.
-- Métricas ambientais e cartões de contexto em tempo real.
-- Gráficos de evolução de crescimento e saúde.
-- Scan 360° com captura automática de quadros da câmera e simulação de conexão com hardware.
+## Variáveis de Ambiente
 
-## API local
+O frontend lê variáveis do `.env` na raiz do diretório `frontend/` (para desenvolvimento local sem Docker) ou do `.env` na raiz do projeto (via Docker Compose).
 
-O arquivo `server.ts` expõe endpoints simulados para apoiar a interface:
+| Variável | Onde é usada | Observação |
+|----------|-------------|------------|
+| `GEMINI_API_KEY` | Build-time (Vite) | Embutida no bundle pelo Vite — deve ser passada como build arg no Docker |
+| `MQTT_HOST` | Runtime (server.ts) | Host do broker HiveMQ |
+| `MQTT_PORT` | Runtime (server.ts) | Padrão: `8883` |
+| `MQTT_USER` | Runtime (server.ts) | |
+| `MQTT_PASSWORD` | Runtime (server.ts) | |
+| `MQTT_USE_TLS` | Runtime (server.ts) | Padrão: `true` |
+| `MQTT_TOPIC_PREFIX` | Runtime (server.ts) | Padrão: `gaia` |
+| `ML_INFERENCE_URL` | Runtime (server.ts) | Padrão: `http://ml-inference:8001` |
+| `NODE_ENV` | Runtime | `production` no Docker |
 
-- `GET /api/dados` retorna leituras mockadas de sensores.
-- `GET /api/modelo-atual?day=1` retorna um estágio de modelo 3D para o dia informado.
-- `GET /api/historico` gera uma série histórica de crescimento, umidade e saúde.
-- `POST /api/analyze-image` simula a análise de uma imagem da planta.
+> **Atenção:** `GEMINI_API_KEY` é injetada pelo Vite **em tempo de build** via `vite.config.ts`. No Docker, ela é passada como `build arg` — não basta definir apenas no `environment` do compose.
 
-## Estrutura do projeto
+---
 
-- `src/App.tsx` controla a navegação entre os módulos do painel.
-- `src/components/dashboard/` concentra os blocos visuais da experiência principal.
-- `src/components/layout/` contém a navegação lateral.
-- `src/components/ui/` reúne componentes visuais reutilizáveis.
-- `server.ts` inicializa a API mock e o middleware do Vite.
+## APIs do Servidor Express
 
-## Observações
+O `server.ts` expõe as seguintes rotas:
 
-- A tela de scan depende de permissão de câmera no navegador.
-- Alguns módulos do menu lateral ainda exibem estado de desenvolvimento.
+| Método | Path | Descrição |
+|--------|------|-----------|
+| `GET` | `/api/dados` | Última leitura de sensor recebida via MQTT |
+| `GET` | `/api/mqtt/status` | Status da conexão com o broker |
+| `GET` | `/api/live/stream` | Stream SSE com dados em tempo real |
+| `GET` | `/api/modelo-atual?day=N` | Metadados do modelo 3D para o dia N |
+| `GET` | `/api/historico` | Histórico simulado de crescimento |
+| `POST` | `/api/analyze-image` | Proxy para o serviço ML de análise de imagem |
+
+---
+
+## Integração com o Backend Python
+
+O serviço `src/services/api.ts` consome o backend Python diretamente para histórico de sensor:
+
+```typescript
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000/api/v1';
+```
+
+O backend exige **token JWT** em todas as rotas protegidas. Para integração completa, o frontend precisará implementar um fluxo de login que obtenha e armazene o token via `POST /api/v1/auth/login`.
+
+---
+
+## Estrutura
+
+```
+frontend/
+├── src/
+│   ├── App.tsx                    # Navegação entre módulos
+│   ├── components/
+│   │   ├── dashboard/             # Blocos visuais do painel
+│   │   ├── layout/                # Sidebar e navegação
+│   │   └── ui/                    # Componentes reutilizáveis
+│   ├── services/
+│   │   └── api.ts                 # Client HTTP para o backend Python
+│   └── types/                     # Tipos TypeScript compartilhados
+├── server.ts                      # Servidor Express + MQTT + SSE
+├── vite.config.ts                 # Config Vite (injeta GEMINI_API_KEY no build)
+├── Dockerfile                     # Multi-stage: deps → builder → runner
+└── .env.example
+```
+
+---
+
+## Docker
+
+O `Dockerfile` usa build multi-stage:
+
+| Stage | Descrição |
+|-------|-----------|
+| `deps` | Instala dependências npm |
+| `builder` | Roda `npm run build` com `GEMINI_API_KEY` como `ARG` |
+| `runner` | Serve o app com `tsx server.ts` em produção |
+
+O `docker-compose.override.yml` (aplicado automaticamente em dev) monta o código como volume e usa o stage `deps` com `npm run dev`.
