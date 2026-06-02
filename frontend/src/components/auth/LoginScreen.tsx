@@ -16,9 +16,9 @@ interface LoginScreenProps {
 const copy = {
   'pt-BR': {
     brand: 'Gaia',
-    subtitle: 'Monitore sua planta real com calma e precisão.',
-    welcome: 'Bem-vindo de volta',
-    email: 'Endereco de e-mail',
+    subtitle: 'Monitore sua planta com calma e precisão.',
+    welcome: 'Bem vindo',
+    email: 'Endereço de e-mail',
     password: 'Senha',
     rememberMe: 'Manter acesso neste dispositivo',
     forgot: 'Esqueceu a senha?',
@@ -32,12 +32,12 @@ const copy = {
     imageCardText:
       'Acompanhe luz, agua, temperatura e saude da planta em uma interface serena e focada.',
     pulseLabel: 'Monitoramento ao vivo ativo',
-    demoHint: 'Use qualquer credencial para entrar na demonstracao.',
+    demoHint: '',
   },
   'en-US': {
     brand: 'Gaia',
     subtitle: 'Monitor your real plant with calm and precision.',
-    welcome: 'Welcome back',
+    welcome: 'Welcome',
     email: 'Email address',
     password: 'Password',
     rememberMe: 'Keep me signed in on this device',
@@ -52,7 +52,7 @@ const copy = {
     imageCardText:
       'Track light, water, temperature, and plant health in a calm, focused interface.',
     pulseLabel: 'Live monitoring active',
-    demoHint: 'Use any credentials to enter the demo.',
+    demoHint: '',
   },
 } as const;
 
@@ -120,8 +120,8 @@ export function LoginScreen({ language, theme, onToggleTheme, onLogin }: LoginSc
           <div className="w-full max-w-[430px] rounded-[28px] bg-[rgba(248,250,248,0.78)] p-5 shadow-[0_24px_70px_rgba(45,52,50,0.08)] backdrop-blur-2xl sm:p-7 lg:rounded-[32px] lg:p-8">
             <div className="mb-8 text-center lg:text-left">
               <p className="text-[11px] font-semibold uppercase tracking-[0.05rem] text-[#627066]">{content.brand}</p>
-              <h1 className="mt-2 font-display text-[2.2rem] font-semibold tracking-tight text-[#27332a] dark:text-[#eef4ee]">{content.welcome}</h1>
-              <p className="mt-2 text-sm leading-6 text-[#607168] dark:text-[#aebbb4]">{content.subtitle}</p>
+              <h1 className="mt-2 font-display text-[2.2rem] font-semibold tracking-tight text-[#27332a] dark:text-[#fffff]">{content.welcome}</h1>
+              <p className="mt-2 text-sm leading-6 text-[#607168] dark:text-[#59615f]">{content.subtitle}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -225,8 +225,7 @@ export function LoginScreen({ language, theme, onToggleTheme, onLogin }: LoginSc
               </button>
             </div>
 
-            <div className="mt-4 rounded-2xl bg-[#e4ebe7] px-4 py-3 text-center text-xs text-[#5d6f66]">
-              {content.demoHint}
+            <div> 
             </div>
           </div>
         </section>
