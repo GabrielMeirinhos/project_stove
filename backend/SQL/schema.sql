@@ -5,11 +5,13 @@ CREATE TABLE IF NOT EXISTS users (
     username varchar(50) NOT NULL UNIQUE,
     hashed_password text NOT NULL,
     is_active boolean NOT NULL DEFAULT TRUE,
+    role varchar(20) NOT NULL DEFAULT 'user',
     created_at timestamptz NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS plant (
     id uuid PRIMARY KEY,
+    user_id uuid REFERENCES users(id),
     common_name varchar(100) NOT NULL,
     scientific_name varchar(150),
     description text,

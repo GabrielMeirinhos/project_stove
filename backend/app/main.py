@@ -28,6 +28,7 @@ from app.routers import (
     plants,
     sensor_readings,
     system_events,
+    users,
     vision,
 )
 
@@ -76,7 +77,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix=API_PREFIX)
 
-_protected = (plants, devices, sensor_readings, irrigation, images, vision, system_events, alerts)
+_protected = (plants, devices, sensor_readings, irrigation, images, vision, system_events, alerts, users)
 for module in _protected:
     app.include_router(
         module.router,
