@@ -1,125 +1,199 @@
-# Sistema de Monitoramento de Horta Inteligente — Backend Python
+# Backend — Sistema de Monitoramento de Estufa Inteligente
 
-Backend em **Python + FastAPI** conectado a **PostgreSQL (Neon)** que
-implementa o schema descrito em `documentacao_banco.pdf` (versão
-1.0/2025). A documentação prevê Spring Boot como backend oficial; este
-projeto entrega a **mesma especificação funcional** em Python, mantendo
-intactos:
+API REST em **Python + FastAPI** com autenticação JWT, controle de acesso por perfil (RBAC), integração MQTT com ESP32 e persistência em PostgreSQL.
 
-- as **8 entidades** descritas na seção 3 do PDF (`plant`, `device`,
-  `sensor_reading`, `irrigation_event`, `plant_image`, `vision_analysis`,
-  `system_event`, `alert`);
-- todos os **relacionamentos** e **cardinalidades** da seção 4;
-- as **decisões de design** da seção 6 (UUID como PK, status calculado,
-  separação alerta/evento, etc.);
-- as **convenções de nomenclatura** da seção 7;
+---
+
+## Stack
+
+- **FastAPI 0.115** — framework web ASGI
+- **PostgreSQL** via `psycopg 3` + `psycopg-pool`
+- **paho-mqtt 2.1** — integração com broker HiveMQ Cloud
+- **python-jose** — geração e validação de JWT
+- **bcrypt** — hash de senhas
+
+---
 
 ## Estrutura
 
 ```
-projeto_7_periodo/
-├── README.md
-├── requirements.txt
-├── .env                     # credenciais Neon (PGHOST, PGUSER, ...)
-├── run.py                   # entrypoint uvicorn
-├── documentacao_banco.pdf   # documentação original
-├── sql/
-│   └── schema.sql           # schema PostgreSQL (executado no startup)
-└── app/
-  ├── main.py              # lifespan, registro de routers + CORS
-  ├── config.py            # constantes + leitura do .env
-  ├── database.py          # singletons de repositório por tabela
-  ├── db/
-  │   ├── connection.py    # pool psycopg-pool
-  │   ├── repository.py    # PostgresRepository (CRUD genérico)
-  │   └── schema.py        # bootstrap idempotente do schema
-  ├── schemas/             # modelos Pydantic por entidade
-  ├── services/            # regras de negócio
-  └── routers/             # endpoints REST por entidade
+backend/
+├── app/
+│   ├── main.py              # Lifespan, registro de routers, CORS
+│   ├── config.py            # Leitura de variáveis de ambiente
+│   ├── auth.py              # JWT, bcrypt, dependências get_current_user / require_superadmin
+│   ├── database.py          # Singletons de repositório por tabela
+│   ├── mqtt_client.py       # Cliente MQTT (HiveMQ Cloud)
+│   ├── db/
+│   │   ├── connection.py    # Pool psycopg-pool
+│   │   ├── repository.py    # PostgresRepository (CRUD genérico)
+│   │   └── schema.py        # Bootstrap idempotente do schema + seed do admin
+│   ├── schemas/             # Modelos Pydantic por entidade
+│   │   ├── user.py
+│   │   ├── plant.py
+│   │   └── ...
+│   ├── services/            # Regras de negócio por entidade
+│   └── routers/             # Endpoints REST por entidade
+│       ├── auth.py          # POST /auth/login
+│       ├── users.py         # POST/GET /users (superadmin)
+│       ├── plants.py
+│       └── ...
+└── SQL/
+    └── schema.sql           # Schema PostgreSQL completo
 ```
 
-## Persistência (Neon PostgreSQL)
+---
 
-A aplicação se conecta ao Neon usando as variáveis libpq padrão
-(`PGHOST`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGSSLMODE`,
-`PGCHANNELBINDING`) carregadas do arquivo `.env`. No startup
-(`lifespan` do FastAPI) o backend:
+## Autenticação e Autorização
 
-1. abre um pool de conexões (`psycopg_pool.ConnectionPool`);
-2. verifica se a tabela `plant` existe; se não, executa
-   `sql/schema.sql` (idempotente).
+### Fluxo JWT
 
-A camada de acesso a dados expõe um `PostgresRepository` genérico
-(`app/db/repository.py`) com **a mesma interface** usada antes pelo
-banco figurativo — isso significa que serviços e routers continuaram
-funcionando sem qualquer alteração quando trocamos a persistência.
+1. `POST /api/v1/auth/login` com `username` e `password` (form data)
+2. Retorna `{ access_token, token_type: "bearer" }`
+3. Todas as requisições protegidas exigem header `Authorization: Bearer <token>`
 
-## Lógica de negócio implementada
+O token é **stateless** — contém `username`, `role` e `user_id`. Expira em `ACCESS_TOKEN_EXPIRE_MINUTES` (padrão: 60 min).
 
-- **Status calculado** em `sensor_reading` (seção 6.3): cada leitura é
-  classificada como `normal`/`warning`/`critical` no momento da inserção,
-  comparando os valores recebidos com os parâmetros ideais da planta
-  vinculada via `device.plant_id`.
-- **Geração automática de alertas** (seção 3.8): cada métrica fora da
-  faixa ideal cria um registro em `alert` referenciando a leitura
-  responsável pelo disparo.
-- **Heartbeat de dispositivo** (seção 3.2): a chegada de uma leitura ou
-  de uma chamada explícita ao endpoint `/heartbeat` atualiza
-  `device.last_seen_at`.
-- **Vínculo bidirecional** entre `plant_image` e `vision_analysis`
-  (seção 4): ao criar uma análise, o `analysis_id` da imagem é
-  preenchido automaticamente.
-- **Resolução de alertas**: o endpoint dedicado preenche `resolved` e
-  `resolved_at` (seção 6.5: alertas têm estado, eventos não).
+### Perfis (roles)
 
-## Como executar
+| Role | Descrição |
+|------|-----------|
+| `superadmin` | Acesso total; gerencia usuários e devices |
+| `user` | Acesso apenas aos próprios recursos |
+
+### Regras por recurso
+
+| Recurso | `user` | `superadmin` |
+|---------|--------|-------------|
+| `plants` | CRUD dos próprios | CRUD de todos |
+| `devices` | Leitura filtrada pelas suas plantas | CRUD de todos |
+| `sensor_readings`, `alerts`, `irrigation_events`, `images` | Filtrado pelos seus devices | Tudo |
+| `vision_analyses` | Filtrado pelas suas imagens | Tudo |
+| `system_events` | 403 | Acesso total |
+| `users` | Sem acesso | Criar e listar |
+
+### Seed do admin
+
+No startup, o backend cria automaticamente o usuário definido em `ADMIN_USERNAME` / `ADMIN_PASSWORD` com role `superadmin`, caso não exista.
+
+---
+
+## Endpoints
+
+Todos os endpoints estão sob `/api/v1`. A documentação interativa completa está disponível em `/docs` (Swagger UI) ou no arquivo [`../openapi.json`](../openapi.json).
+
+### Públicos
+
+| Método | Path | Descrição |
+|--------|------|-----------|
+| `GET` | `/` | Health check |
+| `POST` | `/api/v1/auth/login` | Obter token JWT |
+
+### Protegidos (requerem Bearer token)
+
+| Recurso | Prefixo |
+|---------|---------|
+| Usuários | `/api/v1/users` |
+| Plantas | `/api/v1/plants` |
+| Dispositivos | `/api/v1/devices` |
+| Leituras de sensor | `/api/v1/sensor-readings` |
+| Eventos de irrigação | `/api/v1/irrigation-events` |
+| Imagens | `/api/v1/images` |
+| Análises de visão | `/api/v1/vision-analyses` |
+| Eventos do sistema | `/api/v1/system-events` |
+| Alertas | `/api/v1/alerts` |
+
+---
+
+## Variáveis de Ambiente
+
+```env
+# PostgreSQL
+PGHOST=postgres
+PGDATABASE=stovedb
+PGUSER=stove
+PGPASSWORD=<senha>
+PGSSLMODE=disable
+PGCHANNELBINDING=disable
+
+# MQTT
+MQTT_HOST=<cluster>.s1.eu.hivemq.cloud
+MQTT_PORT=8883
+MQTT_USER=<usuario>
+MQTT_PASSWORD=<senha>
+MQTT_USE_TLS=true
+MQTT_CLIENT_ID=gaia-backend
+MQTT_TOPIC_PREFIX=gaia
+
+# JWT
+SECRET_KEY=<chave-aleatoria-min-32-chars>
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=<senha-forte>
+```
+
+---
+
+## Execução local
+
+### Com Docker (recomendado)
 
 ```bash
-# 1. (opcional) criar virtualenv
+# Na raiz do projeto
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend
+```
+
+### Sem Docker
+
+```bash
+cd backend
 python -m venv .venv
-.venv\Scripts\activate          # Windows
-# source .venv/bin/activate     # Linux/macOS
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # Linux/macOS
 
-# 2. instalar dependências
 pip install -r requirements.txt
-
-# 3. rodar a API
 python run.py
 ```
 
-A API ficará disponível em <http://localhost:8000>. A documentação
-interativa Swagger está em <http://localhost:8000/docs> e a versão
-ReDoc em <http://localhost:8000/redoc>.
+A API fica disponível em `http://localhost:8000`. Swagger em `http://localhost:8000/docs`.
 
-Todos os endpoints são versionados sob `/api/v1`. Exemplo:
+---
 
-```
-GET  /api/v1/plants
-POST /api/v1/sensor-readings
-GET  /api/v1/alerts?only_active=true
-```
+## Schema do Banco
 
-## Fluxo recomendado para apresentação
+O arquivo `SQL/schema.sql` é executado automaticamente no startup se as tabelas não existirem. O bootstrap é idempotente — seguro para reinicializações.
 
-Conforme a seção 10 do PDF:
+### Tabelas
 
-1. `POST /api/v1/plants` — cadastrar uma espécie com seus parâmetros
-   ideais.
-2. `POST /api/v1/devices` — cadastrar um ESP32 vinculado à planta.
-3. `POST /api/v1/sensor-readings` — enviar uma leitura com valor fora
-   da faixa configurada.
-4. `GET /api/v1/sensor-readings` — observar o `status` calculado.
-5. `GET /api/v1/alerts?only_active=true` — observar o alerta gerado
-   automaticamente para a métrica violada.
-6. `POST /api/v1/alerts/{id}/resolve` — resolver o alerta após
-   normalização.
+| Tabela | Descrição |
+|--------|-----------|
+| `users` | Usuários da aplicação (com `role`) |
+| `plant` | Espécies de plantas (com `user_id`) |
+| `device` | Dispositivos ESP32 vinculados a plantas |
+| `sensor_reading` | Leituras de temperatura, umidade, solo, luz |
+| `irrigation_event` | Acionamentos da bomba de irrigação |
+| `plant_image` | Metadados de imagens capturadas |
+| `vision_analysis` | Resultados de inferência ML |
+| `system_event` | Auditoria de eventos do sistema |
+| `alert` | Alertas gerados por leituras fora da faixa |
 
-## Roadmap para produção
+---
 
-- adicionar autenticação/autorização (`OAuth2PasswordBearer`);
-- consumir o broker MQTT em background (`asyncio-mqtt`/`paho-mqtt`)
-  para receber leituras direto do ESP32;
-- mover o conteúdo de `image_base64` para armazenamento externo
-  (S3/GCS) e usar apenas `storage_path`, conforme seção 6.2;
-- não versionar `.env` (mover credenciais para o segredos manager do
-  ambiente de deploy).
+## Lógica de Negócio
+
+- **Status calculado** em `sensor_reading`: cada leitura é classificada como `normal`/`warning`/`critical` comparando com os parâmetros ideais da planta vinculada via `device.plant_id`.
+- **Geração automática de alertas**: cada métrica fora da faixa ideal cria um registro em `alert`.
+- **Heartbeat de dispositivo**: atualiza `device.last_seen_at` via MQTT ou endpoint `/heartbeat`.
+- **Vínculo bidirecional** entre `plant_image` e `vision_analysis`: ao criar uma análise, `analysis_id` da imagem é preenchido automaticamente.
+
+---
+
+## Integração MQTT
+
+O broker HiveMQ Cloud é conectado no startup. Tópicos utilizados:
+
+| Tópico | Direção | Ação |
+|--------|---------|------|
+| `gaia/{device_id}/telemetry` | ESP32 → backend | Registra leitura de sensor |
+| `gaia/{device_id}/heartbeat` | ESP32 → backend | Atualiza `last_seen_at` |
+| `gaia/{device_id}/cmd/pump` | backend → ESP32 | Aciona bomba remotamente |
