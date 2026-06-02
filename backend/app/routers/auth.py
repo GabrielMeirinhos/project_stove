@@ -20,7 +20,7 @@ class TokenResponse(BaseModel):
 def _get_user(username: str) -> dict | None:
     with get_pool().connection() as conn, conn.cursor() as cur:
         cur.execute(
-            "SELECT username, hashed_password, is_active FROM users WHERE username = %s",
+            "SELECT id, username, hashed_password, is_active, role FROM users WHERE username = %s",
             (username,),
         )
         return cur.fetchone()
@@ -40,4 +40,10 @@ def login(form: OAuth2PasswordRequestForm = Depends()) -> TokenResponse:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Usuário inativo",
         )
-    return TokenResponse(access_token=create_access_token(form.username))
+    return TokenResponse(
+        access_token=create_access_token(
+            username=form.username,
+            role=user["role"],
+            user_id=str(user["id"]),
+        )
+    )

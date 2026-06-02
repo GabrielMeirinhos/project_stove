@@ -77,4 +77,5 @@ class Plant(PlantBase):
     """Representação completa de uma planta persistida."""
 
     id: UUID
+    user_id: Optional[UUID]
     created_at: datetime
