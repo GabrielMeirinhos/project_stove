@@ -11,12 +11,23 @@ import { RecentActivity } from './components/dashboard/RecentActivity';
 import { ScanView } from './components/dashboard/ScanView';
 import Charts from './components/dashboard/Charts';
 import Sidebar from './components/layout/Sidebar';
+import { LoginScreen } from './components/auth/LoginScreen';
 import { Menu } from 'lucide-react';
-import { api } from './services/api';
+import { api, AuthUser, AdminOverview } from './services/api';
 import { HistoryData, LiveSensorEvent, MqttStatus, SensorData } from './types';
 
 type ThemeMode = 'light' | 'dark';
 type AppLanguage = 'pt-BR' | 'en-US';
+type HeaderNotificationSeverity = 'info' | 'warning' | 'success';
+
+type HeaderNotification = {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  severity: HeaderNotificationSeverity;
+  unread?: boolean;
+};
 
 const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -57,10 +68,44 @@ const generateMockHistory = (step: number): HistoryData[] => {
 };
 
 export default function App() {
+  const getStoredToken = () => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    return window.localStorage.getItem('gaia-auth-token') || window.sessionStorage.getItem('gaia-auth-token');
+  };
+
+  const getStoredUser = (): AuthUser | null => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    const rawUser = window.localStorage.getItem('gaia-auth-user') || window.sessionStorage.getItem('gaia-auth-user');
+    if (!rawUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(rawUser) as AuthUser;
+    } catch {
+      return null;
+    }
+  };
+
   const [day, setDay] = useState(20);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState('Dashboard');
   const [activeTab, setActiveTab] = useState('My Plant');
+  const [authToken, setAuthToken] = useState<string | null>(() => getStoredToken());
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredUser());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(getStoredToken()));
+  const [persistAuth, setPersistAuth] = useState<boolean>(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    return Boolean(window.localStorage.getItem('gaia-auth-token'));
+  });
   const [language, setLanguage] = useState<AppLanguage>(() => {
     if (typeof window === 'undefined') {
       return 'pt-BR';
@@ -89,15 +134,70 @@ export default function App() {
   const [mqttStatus, setMqttStatus] = useState<MqttStatus | null>(null);
   const [historyData, setHistoryData] = useState<HistoryData[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [adminUsers, setAdminUsers] = useState<AuthUser[]>([]);
+  const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
+  const [adminLoading, setAdminLoading] = useState(false);
   const [demoMode, setDemoMode] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('gaia-demo-mode') === 'on';
   });
 
   useEffect(() => {
+    try {
+      if (isAuthenticated && persistAuth && authToken && currentUser) {
+        window.localStorage.setItem('gaia-auth-token', authToken);
+        window.localStorage.setItem('gaia-auth-user', JSON.stringify(currentUser));
+        window.sessionStorage.removeItem('gaia-auth-token');
+        window.sessionStorage.removeItem('gaia-auth-user');
+        return;
+      }
+
+      if (isAuthenticated && authToken && currentUser) {
+        window.sessionStorage.setItem('gaia-auth-token', authToken);
+        window.sessionStorage.setItem('gaia-auth-user', JSON.stringify(currentUser));
+        window.localStorage.removeItem('gaia-auth-token');
+        window.localStorage.removeItem('gaia-auth-user');
+        return;
+      }
+
+      window.localStorage.removeItem('gaia-auth-token');
+      window.localStorage.removeItem('gaia-auth-user');
+      window.sessionStorage.removeItem('gaia-auth-token');
+      window.sessionStorage.removeItem('gaia-auth-user');
+    } catch {
+      // ignore
+    }
+  }, [authToken, currentUser, isAuthenticated, persistAuth]);
+
+  useEffect(() => {
+    if (!authToken) {
+      return;
+    }
+
+    let isMounted = true;
+    (async () => {
+      try {
+        const user = await api.authMe(authToken);
+        if (!isMounted) return;
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+      } catch {
+        if (!isMounted) return;
+        setAuthToken(null);
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authToken]);
+
+  useEffect(() => {
     let isMounted = true;
 
-    if (demoMode) {
+    if (demoMode || !isAuthenticated) {
       // when demoMode is active we don't subscribe to real stream
       return () => {
         isMounted = false;
@@ -135,12 +235,16 @@ export default function App() {
       isMounted = false;
       eventSource.close();
     };
-  }, [demoMode]);
+  }, [demoMode, isAuthenticated]);
 
   useEffect(() => {
     let isMounted = true;
     const loadHistory = async () => {
       setHistoryLoading(true);
+      if (!isAuthenticated) {
+        setHistoryLoading(false);
+        return;
+      }
       try {
         if (demoMode) {
           // demo mode will populate history separately
@@ -161,7 +265,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [demoMode]);
+  }, [demoMode, isAuthenticated]);
 
   useEffect(() => {
     // persist demo mode preference
@@ -192,7 +296,7 @@ export default function App() {
       tick += 1;
     };
 
-    if (demoMode) {
+    if (demoMode || !isAuthenticated) {
       applyMockData();
       intervalId = window.setInterval(applyMockData, 5000) as unknown as number;
     } else {
@@ -218,7 +322,7 @@ export default function App() {
     return () => {
       if (intervalId) window.clearInterval(intervalId);
     };
-  }, [demoMode]);
+  }, [demoMode, isAuthenticated]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -236,6 +340,10 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (currentUser?.role !== 'admin' && ['Settings', 'Users'].includes(activeView)) {
+      setActiveView('Dashboard');
+    }
+
     if (activeView === 'Analytics') {
       setActiveTab('Analytics');
       return;
@@ -257,6 +365,66 @@ export default function App() {
     }
   };
 
+  const handleLogin = async ({ email, password, rememberMe }: { email: string; password: string; rememberMe: boolean }) => {
+    const response = await api.authLogin(email, password);
+
+    setAuthToken(response.access_token);
+    setCurrentUser(response.user);
+    setPersistAuth(rememberMe);
+    setIsAuthenticated(true);
+    setSidebarOpen(false);
+    setActiveView('Dashboard');
+    setActiveTab('My Plant');
+  };
+
+  const handleLogout = () => {
+    setAuthToken(null);
+    setCurrentUser(null);
+    setAdminUsers([]);
+    setAdminOverview(null);
+    setPersistAuth(false);
+    setIsAuthenticated(false);
+    setSidebarOpen(false);
+    setActiveView('Dashboard');
+    setActiveTab('My Plant');
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated || currentUser?.role !== 'admin' || !authToken) {
+      setAdminUsers([]);
+      setAdminOverview(null);
+      return;
+    }
+
+    let isMounted = true;
+    setAdminLoading(true);
+
+    (async () => {
+      try {
+        const [users, overview] = await Promise.all([
+          api.adminUsers(authToken),
+          api.adminOverview(authToken),
+        ]);
+
+        if (!isMounted) return;
+        setAdminUsers(users);
+        setAdminOverview(overview);
+      } catch {
+        if (!isMounted) return;
+        setAdminUsers([]);
+        setAdminOverview(null);
+      } finally {
+        if (isMounted) {
+          setAdminLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authToken, currentUser?.role, isAuthenticated]);
+
   const isEnglish = language === 'en-US';
 
   const getViewLabel = (view: string) => {
@@ -264,6 +432,7 @@ export default function App() {
     if (view === 'My Plant') return isEnglish ? 'My Plant' : 'Minha Planta';
     if (view === 'Scan 3D') return isEnglish ? 'Live Camera' : 'Camera ao Vivo';
     if (view === 'Analytics') return isEnglish ? 'Analytics' : 'Análises';
+    if (view === 'Users') return isEnglish ? 'Users' : 'Usuários';
     if (view === 'Settings') return isEnglish ? 'Settings' : 'Configurações';
     return view;
   };
@@ -290,7 +459,7 @@ export default function App() {
   };
 
   const plantStage = getPlantStage(day);
-  const notifications = [
+  const notifications: HeaderNotification[] = [
     {
       id: 'mqtt-status',
       title: mqttStatus?.connected ? (isEnglish ? 'MQTT feed active' : 'Feed MQTT ativo') : (isEnglish ? 'MQTT feed disconnected' : 'Feed MQTT desconectado'),
@@ -302,7 +471,7 @@ export default function App() {
           ? 'No broker connection. Check network and credentials to resume readings.'
           : 'Sem conexão com o broker. Verifique rede e credenciais para retomar leituras.',
       time: lastUpdatedAt,
-      severity: (mqttStatus?.connected ? 'success' : 'warning') as const,
+      severity: mqttStatus?.connected ? 'success' : 'warning',
       unread: !mqttStatus?.connected,
     },
     {
@@ -330,10 +499,21 @@ export default function App() {
           ? 'No health data at the moment.'
           : 'Sem dados de saúde no momento.',
       time: lastUpdatedAt,
-      severity: sensorData && sensorData.health < 70 ? 'warning' : 'success',
+          severity: sensorData && sensorData.health < 70 ? 'warning' : 'success',
       unread: Boolean(sensorData && sensorData.health < 70),
     },
   ];
+
+  if (!isAuthenticated) {
+    return (
+      <LoginScreen
+        language={language}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onLogin={handleLogin}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#fdfcfb] dark:bg-slate-950 transition-colors duration-500">
@@ -343,6 +523,8 @@ export default function App() {
         activeItem={activeView}
         setActiveItem={setActiveView}
         language={language}
+        role={currentUser?.role ?? 'user'}
+        onLogout={handleLogout}
       />
       
       <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-10 gap-8 max-w-[1600px] mx-auto overflow-x-hidden">
@@ -556,6 +738,63 @@ export default function App() {
           <div className="flex-1">
             <ScanView language={language} />
           </div>
+        ) : activeView === 'Users' ? (
+          <main className="glass rounded-[32px] p-6 flex-1">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{isEnglish ? 'System Users' : 'Usuários do Sistema'}</h2>
+                <p className="text-slate-500 dark:text-slate-300 text-sm mt-1">
+                  {isEnglish ? 'Admin-only access to users and account metrics.' : 'Acesso exclusivo de admin para usuários e métricas de conta.'}
+                </p>
+              </div>
+              <div className="text-xs uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">
+                {isEnglish ? 'Admin view' : 'Visão admin'}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+              <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-4">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{isEnglish ? 'Total users' : 'Usuários totais'}</p>
+                <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-2">{adminOverview?.users_total ?? 0}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-4">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{isEnglish ? 'Admins' : 'Admins'}</p>
+                <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-2">{adminOverview?.admins_total ?? 0}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-4">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{isEnglish ? 'Pending invites' : 'Convites pendentes'}</p>
+                <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-2">{adminOverview?.pending_invites_total ?? 0}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-4">
+                <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{isEnglish ? 'Pending resets' : 'Resets pendentes'}</p>
+                <p className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-2">{adminOverview?.pending_reset_tokens_total ?? 0}</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 overflow-hidden">
+              <div className="grid grid-cols-12 px-4 py-3 bg-slate-50/70 dark:bg-slate-800/50 text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">
+                <div className="col-span-4">{isEnglish ? 'Name' : 'Nome'}</div>
+                <div className="col-span-4">Email</div>
+                <div className="col-span-2">{isEnglish ? 'Role' : 'Perfil'}</div>
+                <div className="col-span-2">Status</div>
+              </div>
+
+              {adminLoading ? (
+                <div className="px-4 py-6 text-sm text-slate-500 dark:text-slate-300">{isEnglish ? 'Loading users...' : 'Carregando usuários...'}</div>
+              ) : adminUsers.length === 0 ? (
+                <div className="px-4 py-6 text-sm text-slate-500 dark:text-slate-300">{isEnglish ? 'No users found.' : 'Nenhum usuário encontrado.'}</div>
+              ) : (
+                adminUsers.map((user) => (
+                  <div key={user.id} className="grid grid-cols-12 px-4 py-3 border-t border-slate-100/80 dark:border-slate-700/60 text-sm text-slate-700 dark:text-slate-200">
+                    <div className="col-span-4 font-semibold truncate">{user.full_name}</div>
+                    <div className="col-span-4 truncate">{user.email}</div>
+                    <div className="col-span-2 uppercase text-xs font-bold tracking-wider">{user.role}</div>
+                    <div className="col-span-2">{user.is_active ? (isEnglish ? 'Active' : 'Ativo') : (isEnglish ? 'Inactive' : 'Inativo')}</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </main>
         ) : activeView === 'Settings' ? (
           <main className="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
             <div className="lg:col-span-8 flex flex-col gap-8">

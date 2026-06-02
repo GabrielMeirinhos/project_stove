@@ -1,6 +1,35 @@
 import { SensorData, HistoryData, LiveSensorEvent, MqttStatus, PlantAnalysis } from '../types';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000/api/v1';
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_API_URL ?? '/api';
+
+export type AuthRole = 'admin' | 'user';
+
+export interface AuthUser {
+  id: string;
+  full_name: string;
+  email: string;
+  role: AuthRole;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_login_at?: string | null;
+}
+
+export interface AuthLoginResponse {
+  access_token: string;
+  token_type: 'bearer';
+  expires_in_minutes: number;
+  user: AuthUser;
+}
+
+export interface AdminOverview {
+  users_total: number;
+  admins_total: number;
+  active_users_total: number;
+  pending_invites_total: number;
+  pending_reset_tokens_total: number;
+}
 
 type BackendSensorReading = {
   soil_moisture_percent?: number | null;
@@ -97,6 +126,40 @@ const buildHistoryFromReadings = (readings: BackendSensorReading[]): HistoryData
 };
 
 export const api = {
+  async authLogin(email: string, password: string): Promise<AuthLoginResponse> {
+    const res = await fetch(`${AUTH_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) throw new Error('Credenciais inválidas');
+    return res.json();
+  },
+
+  async authMe(token: string): Promise<AuthUser> {
+    const res = await fetch(`${AUTH_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Sessão inválida');
+    return res.json();
+  },
+
+  async adminUsers(token: string): Promise<AuthUser[]> {
+    const res = await fetch(`${AUTH_BASE_URL}/admin/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Falha ao buscar usuários');
+    return res.json();
+  },
+
+  async adminOverview(token: string): Promise<AdminOverview> {
+    const res = await fetch(`${AUTH_BASE_URL}/admin/overview`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Falha ao buscar resumo administrativo');
+    return res.json();
+  },
+
   async getSensors(): Promise<SensorData | null> {
     const res = await fetch('/api/dados');
     if (!res.ok) throw new Error('Falha ao buscar sensores');

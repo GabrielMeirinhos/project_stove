@@ -8,6 +8,7 @@ import { LiveSensorEvent, MqttStatus, SensorData } from "./src/types";
 async function startServer() {
   const app = express();
   const PORT = 3000;
+  const AUTH_BACKEND_URL = process.env.AUTH_BACKEND_URL ?? "http://127.0.0.1:8005";
 
   const MQTT_BROKER_HOST = process.env.MQTT_HOST ?? process.env.MQTT_BROKER_HOST ?? "882be47d29a44dff8eb8bf7a5faa9835.s1.eu.hivemq.cloud";
   const MQTT_BROKER_PORT = Number(process.env.MQTT_PORT ?? process.env.MQTT_BROKER_PORT ?? "8883");
@@ -174,6 +175,63 @@ async function startServer() {
   });
 
   app.use(express.json());
+
+  const proxyAuthRequest = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const targetUrl = new URL(req.originalUrl, AUTH_BACKEND_URL);
+    const headers = new Headers();
+
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value == null) {
+        continue;
+      }
+
+      const normalizedKey = key.toLowerCase();
+      if (normalizedKey === "host" || normalizedKey === "connection" || normalizedKey === "content-length") {
+        continue;
+      }
+
+      headers.set(key, Array.isArray(value) ? value.join(",") : value);
+    }
+
+    const hasBody = req.method !== "GET" && req.method !== "HEAD" && req.body !== undefined;
+
+    if (hasBody && !headers.has("content-type")) {
+      headers.set("content-type", "application/json");
+    }
+
+    try {
+      const upstreamResponse = await fetch(targetUrl, {
+        method: req.method,
+        headers,
+        body: hasBody ? JSON.stringify(req.body) : undefined,
+        redirect: "manual",
+      });
+
+      res.status(upstreamResponse.status);
+
+      upstreamResponse.headers.forEach((value, key) => {
+        const normalizedKey = key.toLowerCase();
+        if (normalizedKey === "content-encoding" || normalizedKey === "transfer-encoding" || normalizedKey === "connection") {
+          return;
+        }
+
+        res.setHeader(key, value);
+      });
+
+      if (upstreamResponse.body) {
+        const body = Buffer.from(await upstreamResponse.arrayBuffer());
+        res.send(body);
+        return;
+      }
+
+      res.end();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  app.all("/api/auth/*", proxyAuthRequest);
+  app.all("/api/admin/*", proxyAuthRequest);
 
   app.get("/api/dados", (req, res) => {
     res.json(latestSensorData);
