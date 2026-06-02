@@ -10,12 +10,13 @@ from app.database import plant_repo
 from app.schemas.plant import Plant, PlantCreate, PlantUpdate
 
 
-def create_plant(data: PlantCreate) -> Plant:
+def create_plant(data: PlantCreate, user_id: Optional[UUID] = None) -> Plant:
     """Persiste uma nova planta e devolve sua representação."""
     record = data.model_dump()
     record.update(
         {
             "id": uuid4(),
+            "user_id": user_id,
             "created_at": datetime.now(timezone.utc),
         }
     )
@@ -28,9 +29,19 @@ def get_plant(plant_id: UUID) -> Optional[Plant]:
     return Plant(**record) if record else None
 
 
-def list_plants(limit: int = 100, offset: int = 0) -> List[Plant]:
-    rows = plant_repo.list(order_by="created_at", descending=True,
-                           limit=limit, offset=offset)
+def list_plants(
+    limit: int = 100,
+    offset: int = 0,
+    user_id: Optional[UUID] = None,
+) -> List[Plant]:
+    def _where(r: dict) -> bool:
+        if user_id is None:
+            return True
+        return str(r.get("user_id", "")) == str(user_id)
+
+    rows = plant_repo.list(
+        where=_where, order_by="created_at", descending=True, limit=limit, offset=offset
+    )
     return [Plant(**row) for row in rows]
 
 

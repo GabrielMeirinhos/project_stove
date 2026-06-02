@@ -11,21 +11,24 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.auth import get_current_user
 from app.config import API_DESCRIPTION, API_PREFIX, API_TITLE, API_VERSION
 from app.db.connection import close_pool, get_pool
-from app.db.schema import ensure_schema
+from app.db.schema import ensure_admin_user, ensure_schema, ensure_users_table
 from app.mqtt_client import start_mqtt, stop_mqtt
 from app.routers import (
     alerts,
+    auth,
     devices,
     images,
     irrigation,
     plants,
     sensor_readings,
     system_events,
+    users,
     vision,
 )
 
@@ -39,6 +42,8 @@ async def lifespan(app: FastAPI):  # noqa: ARG001 — assinatura obrigatória
     logger.info("Inicializando pool de conexões PostgreSQL...")
     get_pool()
     ensure_schema()
+    ensure_users_table()
+    ensure_admin_user()
     logger.info("Conectando ao broker MQTT (HiveMQ)...")
     start_mqtt()
     logger.info("Pronto.")
@@ -70,17 +75,15 @@ app.add_middleware(
 )
 
 
-for module in (
-    plants,
-    devices,
-    sensor_readings,
-    irrigation,
-    images,
-    vision,
-    system_events,
-    alerts,
-):
-    app.include_router(module.router, prefix=API_PREFIX)
+app.include_router(auth.router, prefix=API_PREFIX)
+
+_protected = (plants, devices, sensor_readings, irrigation, images, vision, system_events, alerts, users)
+for module in _protected:
+    app.include_router(
+        module.router,
+        prefix=API_PREFIX,
+        dependencies=[Depends(get_current_user)],
+    )
 
 
 @app.get("/", tags=["health"], summary="Health-check")

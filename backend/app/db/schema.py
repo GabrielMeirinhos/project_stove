@@ -9,6 +9,8 @@ seções 8 e 9 da documentação). Como o arquivo cria todas as tabelas e
 from __future__ import annotations
 
 import logging
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.db.connection import get_pool
@@ -48,3 +50,52 @@ def ensure_schema() -> None:
         finally:
             conn.autocommit = True
     logger.info("Schema aplicado com sucesso.")
+
+
+def ensure_users_table() -> None:
+    """Cria/migra a tabela users (idempotente — seguro para BDs já existentes)."""
+    with get_pool().connection() as conn, conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id uuid PRIMARY KEY,
+                username varchar(50) NOT NULL UNIQUE,
+                hashed_password text NOT NULL,
+                is_active boolean NOT NULL DEFAULT TRUE,
+                role varchar(20) NOT NULL DEFAULT 'user',
+                created_at timestamptz NOT NULL
+            );
+        """)
+        # Migração: adiciona role se a tabela já existia sem ela
+        cur.execute("""
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS role varchar(20) NOT NULL DEFAULT 'user';
+        """)
+        # Migração: adiciona user_id em plant se ainda não existir
+        cur.execute("""
+            ALTER TABLE plant ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES users(id);
+        """)
+
+
+def ensure_admin_user() -> None:
+    """Cria o usuário admin definido em ADMIN_USERNAME/ADMIN_PASSWORD se não existir."""
+    from app import config
+    from app.auth import hash_password
+
+    if not config.ADMIN_USERNAME or not config.ADMIN_PASSWORD:
+        logger.warning("ADMIN_USERNAME ou ADMIN_PASSWORD não definidos — usuário admin não criado.")
+        return
+
+    with get_pool().connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT id FROM users WHERE username = %s", (config.ADMIN_USERNAME,))
+        if cur.fetchone():
+            return
+        cur.execute(
+            "INSERT INTO users (id, username, hashed_password, is_active, role, created_at) "
+            "VALUES (%s, %s, %s, TRUE, 'superadmin', %s)",
+            (
+                str(uuid.uuid4()),
+                config.ADMIN_USERNAME,
+                hash_password(config.ADMIN_PASSWORD),
+                datetime.now(timezone.utc),
+            ),
+        )
+    logger.info("Usuário admin '%s' criado.", config.ADMIN_USERNAME)

@@ -1,0 +1,3980 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Sistema de Monitoramento de Horta Inteligente",
+        "description": "Backend Python (FastAPI) que implementa o schema descrito na documenta\u00c3\u00a7\u00c3\u00a3o de banco de dados do projeto integrador. Persist\u00c3\u00aancia em PostgreSQL (Neon).",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Obt\u00c3\u00a9m token JWT",
+                "operationId": "login_api_v1_auth_login_post",
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_login_api_v1_auth_login_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TokenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/plants": {
+            "post": {
+                "tags": [
+                    "plants"
+                ],
+                "summary": "Cadastra uma nova planta",
+                "operationId": "create_api_v1_plants_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlantCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Plant"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "plants"
+                ],
+                "summary": "Lista plantas cadastradas",
+                "operationId": "list_all_api_v1_plants_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 500,
+                            "minimum": 1,
+                            "default": 100,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Plant"
+                                    },
+                                    "title": "Response List All Api V1 Plants Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/plants/{plant_id}": {
+            "get": {
+                "tags": [
+                    "plants"
+                ],
+                "summary": "Busca planta por id",
+                "operationId": "get_api_v1_plants__plant_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "plant_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Plant Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Plant"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "plants"
+                ],
+                "summary": "Atualiza planta",
+                "operationId": "update_api_v1_plants__plant_id__patch",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "plant_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Plant Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlantUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Plant"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "plants"
+                ],
+                "summary": "Remove planta",
+                "operationId": "delete_api_v1_plants__plant_id__delete",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "plant_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Plant Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "null",
+                                    "title": "Response Delete Api V1 Plants  Plant Id  Delete"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/devices": {
+            "post": {
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Cadastra um novo ESP32 (superadmin only)",
+                "operationId": "create_api_v1_devices_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeviceCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Device"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Lista dispositivos",
+                "operationId": "list_all_api_v1_devices_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "plant_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Plant Id"
+                        }
+                    },
+                    {
+                        "name": "only_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false,
+                            "title": "Only Active"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Device"
+                                    },
+                                    "title": "Response List All Api V1 Devices Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/devices/by-mac/{mac_address}": {
+            "get": {
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Busca dispositivo pelo MAC",
+                "operationId": "get_by_mac_api_v1_devices_by_mac__mac_address__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "mac_address",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Mac Address"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Device"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/devices/{device_id}": {
+            "get": {
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Busca dispositivo por id",
+                "operationId": "get_api_v1_devices__device_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Device Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Device"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Atualiza dispositivo (superadmin only)",
+                "operationId": "update_api_v1_devices__device_id__patch",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Device Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeviceUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Device"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Remove dispositivo (superadmin only)",
+                "operationId": "delete_api_v1_devices__device_id__delete",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Device Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "null",
+                                    "title": "Response Delete Api V1 Devices  Device Id  Delete"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/devices/{device_id}/heartbeat": {
+            "post": {
+                "tags": [
+                    "devices"
+                ],
+                "summary": "Registra heartbeat MQTT",
+                "operationId": "heartbeat_api_v1_devices__device_id__heartbeat_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Device Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Device"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sensor-readings": {
+            "post": {
+                "tags": [
+                    "sensor_readings"
+                ],
+                "summary": "Registra leitura de sensor",
+                "operationId": "ingest_api_v1_sensor_readings_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SensorReadingCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SensorReading"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "sensor_readings"
+                ],
+                "summary": "Consulta hist\u00c3\u00b3rica",
+                "operationId": "list_all_api_v1_sensor_readings_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Device Id"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/SensorStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Status"
+                        }
+                    },
+                    {
+                        "name": "start",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "date-time"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Start"
+                        }
+                    },
+                    {
+                        "name": "end",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "date-time"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "End"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1000,
+                            "minimum": 1,
+                            "default": 100,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SensorReading"
+                                    },
+                                    "title": "Response List All Api V1 Sensor Readings Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sensor-readings/{reading_id}": {
+            "get": {
+                "tags": [
+                    "sensor_readings"
+                ],
+                "summary": "Busca leitura por id",
+                "operationId": "get_api_v1_sensor_readings__reading_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "reading_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Reading Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SensorReading"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/irrigation-events": {
+            "post": {
+                "tags": [
+                    "irrigation"
+                ],
+                "summary": "Registra um acionamento da bomba de irriga\u00c3\u00a7\u00c3\u00a3o",
+                "operationId": "register_api_v1_irrigation_events_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IrrigationEventCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IrrigationEvent"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "irrigation"
+                ],
+                "summary": "Lista eventos",
+                "operationId": "list_all_api_v1_irrigation_events_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Device Id"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 500,
+                            "minimum": 1,
+                            "default": 100,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/IrrigationEvent"
+                                    },
+                                    "title": "Response List All Api V1 Irrigation Events Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/irrigation-events/{event_id}": {
+            "get": {
+                "tags": [
+                    "irrigation"
+                ],
+                "summary": "Busca evento por id",
+                "operationId": "get_api_v1_irrigation_events__event_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Event Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IrrigationEvent"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "irrigation"
+                ],
+                "summary": "Atualiza/finaliza evento",
+                "operationId": "update_api_v1_irrigation_events__event_id__patch",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Event Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IrrigationEventUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/IrrigationEvent"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/images": {
+            "post": {
+                "tags": [
+                    "images"
+                ],
+                "summary": "Registra imagem capturada pela c\u00c3\u00a2mera",
+                "operationId": "register_api_v1_images_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlantImageCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlantImage"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "images"
+                ],
+                "summary": "Lista imagens",
+                "operationId": "list_all_api_v1_images_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Device Id"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 500,
+                            "minimum": 1,
+                            "default": 50,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PlantImage"
+                                    },
+                                    "title": "Response List All Api V1 Images Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/images/{image_id}": {
+            "get": {
+                "tags": [
+                    "images"
+                ],
+                "summary": "Busca imagem por id",
+                "operationId": "get_api_v1_images__image_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "image_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Image Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlantImage"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "images"
+                ],
+                "summary": "Atualiza imagem",
+                "operationId": "update_api_v1_images__image_id__patch",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "image_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Image Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PlantImageUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PlantImage"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/vision-analyses": {
+            "post": {
+                "tags": [
+                    "vision"
+                ],
+                "summary": "Registra an\u00c3\u00a1lise de vis\u00c3\u00a3o computacional",
+                "operationId": "register_api_v1_vision_analyses_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VisionAnalysisCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisionAnalysis"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "vision"
+                ],
+                "summary": "Lista an\u00c3\u00a1lises",
+                "operationId": "list_all_api_v1_vision_analyses_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 500,
+                            "minimum": 1,
+                            "default": 50,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/VisionAnalysis"
+                                    },
+                                    "title": "Response List All Api V1 Vision Analyses Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/vision-analyses/{analysis_id}": {
+            "get": {
+                "tags": [
+                    "vision"
+                ],
+                "summary": "Busca an\u00c3\u00a1lise por id",
+                "operationId": "get_api_v1_vision_analyses__analysis_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "analysis_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Analysis Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisionAnalysis"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/vision-analyses/by-image/{image_id}": {
+            "get": {
+                "tags": [
+                    "vision"
+                ],
+                "summary": "Busca an\u00c3\u00a1lise por imagem",
+                "operationId": "by_image_api_v1_vision_analyses_by_image__image_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "image_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Image Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisionAnalysis"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system-events": {
+            "post": {
+                "tags": [
+                    "system_events"
+                ],
+                "summary": "Registra evento de auditoria do sistema",
+                "operationId": "register_api_v1_system_events_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SystemEventCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemEvent"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "system_events"
+                ],
+                "summary": "Lista eventos do sistema",
+                "operationId": "list_all_api_v1_system_events_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Device Id"
+                        }
+                    },
+                    {
+                        "name": "only_unacknowledged",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false,
+                            "title": "Only Unacknowledged"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1000,
+                            "minimum": 1,
+                            "default": 100,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SystemEvent"
+                                    },
+                                    "title": "Response List All Api V1 System Events Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system-events/{event_id}": {
+            "get": {
+                "tags": [
+                    "system_events"
+                ],
+                "summary": "Busca evento por id",
+                "operationId": "get_api_v1_system_events__event_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Event Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemEvent"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/system-events/{event_id}/acknowledge": {
+            "post": {
+                "tags": [
+                    "system_events"
+                ],
+                "summary": "Marca evento como reconhecido",
+                "operationId": "acknowledge_api_v1_system_events__event_id__acknowledge_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Event Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SystemEvent"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alerts": {
+            "post": {
+                "tags": [
+                    "alerts"
+                ],
+                "summary": "Cria alerta manualmente",
+                "operationId": "create_api_v1_alerts_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AlertCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alert"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "alerts"
+                ],
+                "summary": "Lista alertas",
+                "operationId": "list_all_api_v1_alerts_get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "device_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Device Id"
+                        }
+                    },
+                    {
+                        "name": "only_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false,
+                            "title": "Only Active"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1000,
+                            "minimum": 1,
+                            "default": 100,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Alert"
+                                    },
+                                    "title": "Response List All Api V1 Alerts Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alerts/{alert_id}": {
+            "get": {
+                "tags": [
+                    "alerts"
+                ],
+                "summary": "Busca alerta por id",
+                "operationId": "get_api_v1_alerts__alert_id__get",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "alert_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Alert Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alert"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alerts/{alert_id}/resolve": {
+            "post": {
+                "tags": [
+                    "alerts"
+                ],
+                "summary": "Resolve alerta",
+                "operationId": "resolve_api_v1_alerts__alert_id__resolve_post",
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "alert_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Alert Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Alert"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Lista usu\u00c3\u00a1rios (superadmin only)",
+                "operationId": "list_all_api_v1_users_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List All Api V1 Users Get"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Cria novo usu\u00c3\u00a1rio (superadmin only)",
+                "operationId": "create_api_v1_users_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "OAuth2PasswordBearer": []
+                    }
+                ]
+            }
+        },
+        "/": {
+            "get": {
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health-check",
+                "description": "Endpoint trivial para verificar se o servi\u00c3\u00a7o est\u00c3\u00a1 no ar.",
+                "operationId": "root__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "title": "Response Root  Get"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Alert": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Device Id"
+                    },
+                    "sensor_reading_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sensor Reading Id"
+                    },
+                    "alert_type": {
+                        "$ref": "#/components/schemas/AlertType"
+                    },
+                    "metric_name": {
+                        "type": "string",
+                        "title": "Metric Name"
+                    },
+                    "threshold_value": {
+                        "type": "number",
+                        "title": "Threshold Value"
+                    },
+                    "actual_value": {
+                        "type": "number",
+                        "title": "Actual Value"
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "resolved": {
+                        "type": "boolean",
+                        "title": "Resolved"
+                    },
+                    "triggered_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Triggered At"
+                    },
+                    "resolved_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Resolved At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "device_id",
+                    "sensor_reading_id",
+                    "alert_type",
+                    "metric_name",
+                    "threshold_value",
+                    "actual_value",
+                    "message",
+                    "resolved",
+                    "triggered_at",
+                    "resolved_at"
+                ],
+                "title": "Alert"
+            },
+            "AlertCreate": {
+                "properties": {
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Device Id"
+                    },
+                    "sensor_reading_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sensor Reading Id"
+                    },
+                    "alert_type": {
+                        "$ref": "#/components/schemas/AlertType"
+                    },
+                    "metric_name": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "title": "Metric Name"
+                    },
+                    "threshold_value": {
+                        "type": "number",
+                        "title": "Threshold Value"
+                    },
+                    "actual_value": {
+                        "type": "number",
+                        "title": "Actual Value"
+                    },
+                    "message": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "title": "Message"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "device_id",
+                    "alert_type",
+                    "metric_name",
+                    "threshold_value",
+                    "actual_value",
+                    "message"
+                ],
+                "title": "AlertCreate",
+                "description": "Geralmente os alertas s\u00c3\u00a3o gerados automaticamente pelo backend\n(a partir de um ``sensor_reading``), mas o cliente tamb\u00c3\u00a9m pode\ncriar alertas manualmente \u00e2\u20ac\u201d por exemplo, alertas de conectividade."
+            },
+            "AlertType": {
+                "type": "string",
+                "enum": [
+                    "temperature",
+                    "humidity",
+                    "soil_moisture",
+                    "connectivity"
+                ],
+                "title": "AlertType",
+                "description": "Categorias previstas no PDF (se\u00c3\u00a7\u00c3\u00a3o 3.8)."
+            },
+            "Body_login_api_v1_auth_login_post": {
+                "properties": {
+                    "grant_type": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "pattern": "password"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Grant Type"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "password": {
+                        "type": "string",
+                        "title": "Password"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "title": "Scope",
+                        "default": ""
+                    },
+                    "client_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Client Id"
+                    },
+                    "client_secret": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Client Secret"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "title": "Body_login_api_v1_auth_login_post"
+            },
+            "Device": {
+                "properties": {
+                    "plant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Plant Id",
+                        "description": "Planta monitorada por este dispositivo"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "title": "Name",
+                        "description": "Ex: \"ESP32-Horta-01\""
+                    },
+                    "mac_address": {
+                        "type": "string",
+                        "maxLength": 17,
+                        "title": "Mac Address",
+                        "description": "MAC f\u00c3\u00adsico (AA:BB:CC:DD:EE:FF)"
+                    },
+                    "firmware_version": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 20
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Firmware Version",
+                        "description": "Vers\u00c3\u00a3o do firmware (ex: 1.2.3)"
+                    },
+                    "location_description": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Location Description",
+                        "description": "Descri\u00c3\u00a7\u00c3\u00a3o da localiza\u00c3\u00a7\u00c3\u00a3o f\u00c3\u00adsica"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active",
+                        "description": "Dispositivo ativo no sistema",
+                        "default": true
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "last_seen_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Seen At",
+                        "description": "\u00c3\u0161ltimo heartbeat MQTT recebido"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "plant_id",
+                    "name",
+                    "mac_address",
+                    "id",
+                    "created_at"
+                ],
+                "title": "Device"
+            },
+            "DeviceCreate": {
+                "properties": {
+                    "plant_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Plant Id",
+                        "description": "Planta monitorada por este dispositivo"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 80,
+                        "title": "Name",
+                        "description": "Ex: \"ESP32-Horta-01\""
+                    },
+                    "mac_address": {
+                        "type": "string",
+                        "maxLength": 17,
+                        "title": "Mac Address",
+                        "description": "MAC f\u00c3\u00adsico (AA:BB:CC:DD:EE:FF)"
+                    },
+                    "firmware_version": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 20
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Firmware Version",
+                        "description": "Vers\u00c3\u00a3o do firmware (ex: 1.2.3)"
+                    },
+                    "location_description": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Location Description",
+                        "description": "Descri\u00c3\u00a7\u00c3\u00a3o da localiza\u00c3\u00a7\u00c3\u00a3o f\u00c3\u00adsica"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active",
+                        "description": "Dispositivo ativo no sistema",
+                        "default": true
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "plant_id",
+                    "name",
+                    "mac_address"
+                ],
+                "title": "DeviceCreate",
+                "description": "Payload para registro de um novo ESP32."
+            },
+            "DeviceUpdate": {
+                "properties": {
+                    "plant_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Plant Id"
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 80
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "firmware_version": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 20
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Firmware Version"
+                    },
+                    "location_description": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 200
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Location Description"
+                    },
+                    "is_active": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Is Active"
+                    }
+                },
+                "type": "object",
+                "title": "DeviceUpdate"
+            },
+            "EventSeverity": {
+                "type": "string",
+                "enum": [
+                    "info",
+                    "warning",
+                    "error",
+                    "critical"
+                ],
+                "title": "EventSeverity"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "HealthStatus": {
+                "type": "string",
+                "enum": [
+                    "excellent",
+                    "good",
+                    "warning",
+                    "critical"
+                ],
+                "title": "HealthStatus",
+                "description": "Classifica\u00c3\u00a7\u00c3\u00a3o derivada do ``health_score`` (se\u00c3\u00a7\u00c3\u00a3o 3.6)."
+            },
+            "ImageFormat": {
+                "type": "string",
+                "enum": [
+                    "jpeg",
+                    "png",
+                    "webp"
+                ],
+                "title": "ImageFormat"
+            },
+            "IrrigationEvent": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Device Id"
+                    },
+                    "trigger_type": {
+                        "$ref": "#/components/schemas/TriggerType"
+                    },
+                    "duration_seconds": {
+                        "type": "number",
+                        "title": "Duration Seconds"
+                    },
+                    "water_volume_ml": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Water Volume Ml"
+                    },
+                    "trigger_reason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Trigger Reason"
+                    },
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success"
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Started At"
+                    },
+                    "finished_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Finished At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "device_id",
+                    "trigger_type",
+                    "duration_seconds",
+                    "water_volume_ml",
+                    "trigger_reason",
+                    "success",
+                    "started_at",
+                    "finished_at"
+                ],
+                "title": "IrrigationEvent"
+            },
+            "IrrigationEventCreate": {
+                "properties": {
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Device Id"
+                    },
+                    "trigger_type": {
+                        "$ref": "#/components/schemas/TriggerType"
+                    },
+                    "duration_seconds": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Duration Seconds",
+                        "description": "Dura\u00c3\u00a7\u00c3\u00a3o total (s)"
+                    },
+                    "water_volume_ml": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Water Volume Ml",
+                        "description": "Volume estimado de \u00c3\u00a1gua utilizado (ml)"
+                    },
+                    "trigger_reason": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 300
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Trigger Reason",
+                        "description": "Motivo leg\u00c3\u00advel (ex: \"Solo abaixo de 30%\")"
+                    },
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success",
+                        "description": "Irriga\u00c3\u00a7\u00c3\u00a3o conclu\u00c3\u00adda com sucesso?",
+                        "default": true
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Started At",
+                        "description": "In\u00c3\u00adcio da irriga\u00c3\u00a7\u00c3\u00a3o"
+                    },
+                    "finished_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Finished At",
+                        "description": "Fim da irriga\u00c3\u00a7\u00c3\u00a3o"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "device_id",
+                    "trigger_type",
+                    "duration_seconds",
+                    "started_at"
+                ],
+                "title": "IrrigationEventCreate"
+            },
+            "IrrigationEventUpdate": {
+                "properties": {
+                    "water_volume_ml": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Water Volume Ml"
+                    },
+                    "trigger_reason": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 300
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Trigger Reason"
+                    },
+                    "success": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Success"
+                    },
+                    "finished_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Finished At"
+                    }
+                },
+                "type": "object",
+                "title": "IrrigationEventUpdate",
+                "description": "Permite, por exemplo, registrar o ``finished_at`` posteriormente."
+            },
+            "Plant": {
+                "properties": {
+                    "common_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "title": "Common Name",
+                        "description": "Nome popular (ex: Alface, Manjeric\u00c3\u00a3o)"
+                    },
+                    "scientific_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 150
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Scientific Name",
+                        "description": "Nome cient\u00c3\u00adfico (ex: Lactuca sativa)"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Descri\u00c3\u00a7\u00c3\u00a3o geral da esp\u00c3\u00a9cie e caracter\u00c3\u00adsticas de cultivo"
+                    },
+                    "optimal_temp_min": {
+                        "type": "number",
+                        "title": "Optimal Temp Min",
+                        "description": "Temperatura m\u00c3\u00adnima ideal (\u00c2\u00b0C)"
+                    },
+                    "optimal_temp_max": {
+                        "type": "number",
+                        "title": "Optimal Temp Max",
+                        "description": "Temperatura m\u00c3\u00a1xima ideal (\u00c2\u00b0C)"
+                    },
+                    "optimal_humidity_min": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Optimal Humidity Min",
+                        "description": "Umidade do ar m\u00c3\u00adnima ideal (%)"
+                    },
+                    "optimal_humidity_max": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Optimal Humidity Max",
+                        "description": "Umidade do ar m\u00c3\u00a1xima ideal (%)"
+                    },
+                    "optimal_soil_moisture_min": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Optimal Soil Moisture Min",
+                        "description": "Umidade m\u00c3\u00adnima do solo ideal (%)"
+                    },
+                    "optimal_soil_moisture_max": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Optimal Soil Moisture Max",
+                        "description": "Umidade m\u00c3\u00a1xima do solo ideal (%)"
+                    },
+                    "watering_interval_hours": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Watering Interval Hours",
+                        "description": "Intervalo recomendado entre irriga\u00c3\u00a7\u00c3\u00b5es (horas)"
+                    },
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "user_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "User Id"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "common_name",
+                    "optimal_temp_min",
+                    "optimal_temp_max",
+                    "optimal_humidity_min",
+                    "optimal_humidity_max",
+                    "optimal_soil_moisture_min",
+                    "optimal_soil_moisture_max",
+                    "watering_interval_hours",
+                    "id",
+                    "user_id",
+                    "created_at"
+                ],
+                "title": "Plant",
+                "description": "Representa\u00c3\u00a7\u00c3\u00a3o completa de uma planta persistida."
+            },
+            "PlantCreate": {
+                "properties": {
+                    "common_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "title": "Common Name",
+                        "description": "Nome popular (ex: Alface, Manjeric\u00c3\u00a3o)"
+                    },
+                    "scientific_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 150
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Scientific Name",
+                        "description": "Nome cient\u00c3\u00adfico (ex: Lactuca sativa)"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Descri\u00c3\u00a7\u00c3\u00a3o geral da esp\u00c3\u00a9cie e caracter\u00c3\u00adsticas de cultivo"
+                    },
+                    "optimal_temp_min": {
+                        "type": "number",
+                        "title": "Optimal Temp Min",
+                        "description": "Temperatura m\u00c3\u00adnima ideal (\u00c2\u00b0C)"
+                    },
+                    "optimal_temp_max": {
+                        "type": "number",
+                        "title": "Optimal Temp Max",
+                        "description": "Temperatura m\u00c3\u00a1xima ideal (\u00c2\u00b0C)"
+                    },
+                    "optimal_humidity_min": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Optimal Humidity Min",
+                        "description": "Umidade do ar m\u00c3\u00adnima ideal (%)"
+                    },
+                    "optimal_humidity_max": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Optimal Humidity Max",
+                        "description": "Umidade do ar m\u00c3\u00a1xima ideal (%)"
+                    },
+                    "optimal_soil_moisture_min": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Optimal Soil Moisture Min",
+                        "description": "Umidade m\u00c3\u00adnima do solo ideal (%)"
+                    },
+                    "optimal_soil_moisture_max": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Optimal Soil Moisture Max",
+                        "description": "Umidade m\u00c3\u00a1xima do solo ideal (%)"
+                    },
+                    "watering_interval_hours": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Watering Interval Hours",
+                        "description": "Intervalo recomendado entre irriga\u00c3\u00a7\u00c3\u00b5es (horas)"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "common_name",
+                    "optimal_temp_min",
+                    "optimal_temp_max",
+                    "optimal_humidity_min",
+                    "optimal_humidity_max",
+                    "optimal_soil_moisture_min",
+                    "optimal_soil_moisture_max",
+                    "watering_interval_hours"
+                ],
+                "title": "PlantCreate",
+                "description": "Payload para cadastro de uma nova esp\u00c3\u00a9cie."
+            },
+            "PlantImage": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Device Id"
+                    },
+                    "analysis_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Analysis Id"
+                    },
+                    "image_base64": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Image Base64"
+                    },
+                    "image_format": {
+                        "$ref": "#/components/schemas/ImageFormat"
+                    },
+                    "width_px": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Width Px"
+                    },
+                    "height_px": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Height Px"
+                    },
+                    "file_size_bytes": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "File Size Bytes"
+                    },
+                    "storage_path": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Storage Path"
+                    },
+                    "captured_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Captured At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "device_id",
+                    "analysis_id",
+                    "image_base64",
+                    "image_format",
+                    "width_px",
+                    "height_px",
+                    "file_size_bytes",
+                    "storage_path",
+                    "captured_at"
+                ],
+                "title": "PlantImage"
+            },
+            "PlantImageCreate": {
+                "properties": {
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Device Id",
+                        "description": "Dispositivo/c\u00c3\u00a2mera que capturou"
+                    },
+                    "image_base64": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Image Base64",
+                        "description": "Conte\u00c3\u00bado codificado em Base64 (modo acad\u00c3\u00aamico)"
+                    },
+                    "image_format": {
+                        "$ref": "#/components/schemas/ImageFormat",
+                        "description": "Formato da imagem"
+                    },
+                    "width_px": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Width Px"
+                    },
+                    "height_px": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Height Px"
+                    },
+                    "file_size_bytes": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "File Size Bytes"
+                    },
+                    "storage_path": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 500
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Storage Path",
+                        "description": "Caminho em disco ou URL externa. Recomendado em produ\u00c3\u00a7\u00c3\u00a3o em vez de armazenar o conte\u00c3\u00bado em ``image_base64`` (se\u00c3\u00a7\u00c3\u00a3o 6.2)."
+                    },
+                    "captured_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Captured At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "device_id",
+                    "image_format"
+                ],
+                "title": "PlantImageCreate"
+            },
+            "PlantImageUpdate": {
+                "properties": {
+                    "analysis_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Analysis Id"
+                    },
+                    "storage_path": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 500
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Storage Path"
+                    }
+                },
+                "type": "object",
+                "title": "PlantImageUpdate",
+                "description": "Tipicamente usado para vincular a imagem \u00c3\u00a0 an\u00c3\u00a1lise de vis\u00c3\u00a3o."
+            },
+            "PlantUpdate": {
+                "properties": {
+                    "common_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Common Name"
+                    },
+                    "scientific_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 150
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Scientific Name"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "optimal_temp_min": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Optimal Temp Min"
+                    },
+                    "optimal_temp_max": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Optimal Temp Max"
+                    },
+                    "optimal_humidity_min": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "maximum": 100.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Optimal Humidity Min"
+                    },
+                    "optimal_humidity_max": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "maximum": 100.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Optimal Humidity Max"
+                    },
+                    "optimal_soil_moisture_min": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "maximum": 100.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Optimal Soil Moisture Min"
+                    },
+                    "optimal_soil_moisture_max": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "maximum": 100.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Optimal Soil Moisture Max"
+                    },
+                    "watering_interval_hours": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Watering Interval Hours"
+                    }
+                },
+                "type": "object",
+                "title": "PlantUpdate",
+                "description": "Atualiza\u00c3\u00a7\u00c3\u00a3o parcial \u00e2\u20ac\u201d todos os campos s\u00c3\u00a3o opcionais."
+            },
+            "SensorReading": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Device Id"
+                    },
+                    "temperature_celsius": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Temperature Celsius"
+                    },
+                    "humidity_percent": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Humidity Percent"
+                    },
+                    "soil_moisture_percent": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Soil Moisture Percent"
+                    },
+                    "light_lux": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Light Lux"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/SensorStatus"
+                    },
+                    "recorded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Recorded At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "device_id",
+                    "temperature_celsius",
+                    "humidity_percent",
+                    "soil_moisture_percent",
+                    "light_lux",
+                    "status",
+                    "recorded_at"
+                ],
+                "title": "SensorReading",
+                "description": "Leitura persistida com ``status`` j\u00c3\u00a1 calculado."
+            },
+            "SensorReadingCreate": {
+                "properties": {
+                    "device_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Device Id",
+                        "description": "Dispositivo que realizou a leitura"
+                    },
+                    "temperature_celsius": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Temperature Celsius",
+                        "description": "Temperatura (\u00c2\u00b0C)"
+                    },
+                    "humidity_percent": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "maximum": 100.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Humidity Percent",
+                        "description": "Umidade do ar (%)"
+                    },
+                    "soil_moisture_percent": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "maximum": 100.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Soil Moisture Percent",
+                        "description": "Umidade do solo (%)"
+                    },
+                    "light_lux": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Light Lux",
+                        "description": "Luminosidade ambiente (lux)"
+                    },
+                    "recorded_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Recorded At",
+                        "description": "Timestamp da coleta no sensor. Quando ausente, o backend preenche com o instante atual."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "device_id"
+                ],
+                "title": "SensorReadingCreate",
+                "description": "Leitura recebida via MQTT/HTTP a partir de um ESP32."
+            },
+            "SensorStatus": {
+                "type": "string",
+                "enum": [
+                    "normal",
+                    "warning",
+                    "critical"
+                ],
+                "title": "SensorStatus",
+                "description": "Classifica\u00c3\u00a7\u00c3\u00a3o calculada de uma leitura.\n\nDefinida na se\u00c3\u00a7\u00c3\u00a3o 3.3 do PDF: ``normal``, ``warning`` ou ``critical``."
+            },
+            "SystemEvent": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "device_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Device Id"
+                    },
+                    "event_type": {
+                        "type": "string",
+                        "title": "Event Type"
+                    },
+                    "severity": {
+                        "$ref": "#/components/schemas/EventSeverity"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description"
+                    },
+                    "payload_json": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Payload Json"
+                    },
+                    "acknowledged": {
+                        "type": "boolean",
+                        "title": "Acknowledged"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Occurred At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "device_id",
+                    "event_type",
+                    "severity",
+                    "description",
+                    "payload_json",
+                    "acknowledged",
+                    "occurred_at"
+                ],
+                "title": "SystemEvent"
+            },
+            "SystemEventCreate": {
+                "properties": {
+                    "device_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Device Id",
+                        "description": "Dispositivo relacionado (nulo para eventos globais)"
+                    },
+                    "event_type": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "title": "Event Type",
+                        "description": "Ex: \"device_connected\", \"sensor_failure\", \"firmware_update\""
+                    },
+                    "severity": {
+                        "$ref": "#/components/schemas/EventSeverity"
+                    },
+                    "description": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "title": "Description"
+                    },
+                    "payload_json": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Payload Json",
+                        "description": "Metadados em JSON livre (decis\u00c3\u00a3o 6.4 do PDF)"
+                    },
+                    "occurred_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Occurred At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "event_type",
+                    "severity",
+                    "description"
+                ],
+                "title": "SystemEventCreate"
+            },
+            "TokenResponse": {
+                "properties": {
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token"
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "title": "Token Type",
+                        "default": "bearer"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "access_token"
+                ],
+                "title": "TokenResponse"
+            },
+            "TriggerType": {
+                "type": "string",
+                "enum": [
+                    "automatic",
+                    "manual"
+                ],
+                "title": "TriggerType",
+                "description": "Origem do acionamento da bomba (se\u00c3\u00a7\u00c3\u00a3o 3.4 do PDF)."
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active"
+                    },
+                    "role": {
+                        "type": "string",
+                        "title": "Role"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "username",
+                    "is_active",
+                    "role",
+                    "created_at"
+                ],
+                "title": "User"
+            },
+            "UserCreate": {
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "minLength": 3,
+                        "title": "Username"
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 6,
+                        "title": "Password"
+                    },
+                    "role": {
+                        "type": "string",
+                        "pattern": "^(user|superadmin)$",
+                        "title": "Role",
+                        "default": "user"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "title": "UserCreate"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            },
+            "VisionAnalysis": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "image_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Image Id"
+                    },
+                    "model_version": {
+                        "type": "string",
+                        "title": "Model Version"
+                    },
+                    "health_score": {
+                        "type": "number",
+                        "title": "Health Score"
+                    },
+                    "health_status": {
+                        "$ref": "#/components/schemas/HealthStatus"
+                    },
+                    "leaf_coverage_percent": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Leaf Coverage Percent"
+                    },
+                    "detected_issues": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Detected Issues"
+                    },
+                    "recommendations": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Recommendations"
+                    },
+                    "confidence_score": {
+                        "type": "number",
+                        "title": "Confidence Score"
+                    },
+                    "processing_time_ms": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Processing Time Ms"
+                    },
+                    "analyzed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Analyzed At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "image_id",
+                    "model_version",
+                    "health_score",
+                    "health_status",
+                    "leaf_coverage_percent",
+                    "detected_issues",
+                    "recommendations",
+                    "confidence_score",
+                    "processing_time_ms",
+                    "analyzed_at"
+                ],
+                "title": "VisionAnalysis"
+            },
+            "VisionAnalysisCreate": {
+                "properties": {
+                    "image_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Image Id",
+                        "description": "Imagem que foi analisada"
+                    },
+                    "model_version": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "title": "Model Version",
+                        "description": "Vers\u00c3\u00a3o do modelo OpenCV/algoritmo"
+                    },
+                    "health_score": {
+                        "type": "number",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "title": "Health Score",
+                        "description": "\u00c3\udc8dndice de sa\u00c3\u00bade (0=cr\u00c3\u00adtico, 100=excelente)"
+                    },
+                    "health_status": {
+                        "$ref": "#/components/schemas/HealthStatus"
+                    },
+                    "leaf_coverage_percent": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "maximum": 100.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Leaf Coverage Percent"
+                    },
+                    "detected_issues": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Detected Issues",
+                        "description": "JSON com problemas detectados e coordenadas"
+                    },
+                    "recommendations": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Recommendations",
+                        "description": "Sugest\u00c3\u00b5es geradas a partir da an\u00c3\u00a1lise"
+                    },
+                    "confidence_score": {
+                        "type": "number",
+                        "maximum": 1.0,
+                        "minimum": 0.0,
+                        "title": "Confidence Score",
+                        "description": "Confian\u00c3\u00a7a da an\u00c3\u00a1lise (0..1)"
+                    },
+                    "processing_time_ms": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Processing Time Ms"
+                    },
+                    "analyzed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Analyzed At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "image_id",
+                    "model_version",
+                    "health_score",
+                    "health_status",
+                    "confidence_score"
+                ],
+                "title": "VisionAnalysisCreate"
+            }
+        },
+        "securitySchemes": {
+            "OAuth2PasswordBearer": {
+                "type": "oauth2",
+                "flows": {
+                    "password": {
+                        "scopes": {},
+                        "tokenUrl": "/api/v1/auth/login"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -16,6 +16,7 @@ from typing import Any, Dict
 
 from app.db.repository import PostgresRepository
 
+user_repo: PostgresRepository[Dict[str, Any]] = PostgresRepository("users")
 plant_repo: PostgresRepository[Dict[str, Any]] = PostgresRepository("plant")
 device_repo: PostgresRepository[Dict[str, Any]] = PostgresRepository("device")
 sensor_reading_repo: PostgresRepository[Dict[str, Any]] = PostgresRepository(
