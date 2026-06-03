@@ -429,8 +429,13 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
+
+    app.get("/", (req, res) => {
+      res.sendFile(path.join(process.cwd(), "stove_landing_final.html"));
+    });
+
+    app.use("/app", express.static(distPath));
+    app.get("/app*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
