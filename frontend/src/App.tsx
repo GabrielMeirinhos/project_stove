@@ -250,7 +250,7 @@ export default function App() {
           // demo mode will populate history separately
           return;
         }
-        const history = await api.getHistory();
+        const history = await api.getHistory(authToken ?? undefined);
         if (!isMounted) return;
         setHistoryData(history);
       } catch {
@@ -306,7 +306,7 @@ export default function App() {
           const [initialSensors, initialStatus, history] = await Promise.all([
             api.getSensors(),
             api.getMqttStatus(),
-            api.getHistory(),
+            api.getHistory(authToken ?? undefined),
           ]);
           setSensorData(initialSensors);
           setMqttStatus(initialStatus);

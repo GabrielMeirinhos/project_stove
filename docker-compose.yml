@@ -35,6 +35,7 @@ services:
       MQTT_USE_TLS: "${MQTT_USE_TLS:-true}"
       MQTT_TOPIC_PREFIX: "${MQTT_TOPIC_PREFIX:-gaia}"
       ML_INFERENCE_URL: "http://ml-inference:8001"
+      BACKEND_API_URL: "${BACKEND_API_URL:-http://backend:8000}"
     depends_on:
       backend:
         condition: service_healthy
