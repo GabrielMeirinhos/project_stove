@@ -1,0 +1,23 @@
+{
+  "DATASET_ROOT": "C:\\Users\\gabri.GABRIEL\\.cache\\kagglehub\\datasets\\mohitsingh1804\\plantvillage",
+  "OUTPUT_DIR": "outputs",
+  "MODELS_DIR": "outputs\\models",
+  "LOGS_DIR": "outputs\\logs",
+  "PLOTS_DIR": "outputs\\plots",
+  "IMG_SIZE": "(128, 128)",
+  "IMG_CHANNELS": "3",
+  "BATCH_SIZE": "32",
+  "EPOCHS": "50",
+  "LEARNING_RATE": "0.001",
+  "FINE_TUNE_LR": "1e-05",
+  "FINE_TUNE_AT": "100",
+  "VAL_SPLIT": "0.15",
+  "TEST_SPLIT": "0.15",
+  "RANDOM_STATE": "42",
+  "DROPOUT_RATE": "0.4",
+  "L2_REG": "0.0001",
+  "TFLITE_QUANTIZE": "True",
+  "SEED": "42",
+  "setup_dirs": "<classmethod(<function Config.setup_dirs at 0x0000023F50ED6C00>)>",
+  "save": "<classmethod(<function Config.save at 0x0000023F50ED6CA0>)>"
+}

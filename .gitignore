@@ -1,13 +1,7 @@
-# =============================================================================
-# Environment & Secrets
-# =============================================================================
-.env
-.env.*
-!.env.example
-
-# =============================================================================
-# Python
-# =============================================================================
+# ── Ambiente Python ───────────────────────────────────────────────────────────
+venv/
+.venv/
+env/
 __pycache__/
 *.py[cod]
 *.pyo
@@ -22,62 +16,62 @@ build/
 .ruff_cache/
 .coverage
 htmlcov/
-venv/
-.venv/
-env/
 
-# =============================================================================
-# ML Artifacts (arquivos pesados — nunca commitar)
-# =============================================================================
+# ── ML — Datasets (baixados via download_dataset.py, não commitar) ────────────
 ml/datasets/
+ml/training/datasets_raw/
+**/PlantVillage/
+**/plantvillage/
+.kaggle/
+
+# ── ML — Modelos e outputs de treino ─────────────────────────────────────────
 ml/models/
 ml/checkpoints/
 ml/outputs/models/
 ml/outputs/logs/
 ml/outputs/plots/
-# Paths legados (pré-reorganização)
+ml/training/outputs/
 outputs/
-**/PlantVillage/
-**/plantvillage/
-.kaggle/
 *.keras
 *.h5
 *.tflite
 *.pb
 saved_model/
-capture_*.jpg
-capture_*.png
 
-# Manter métricas (pequenas, úteis para comparar experimentos)
+# Manter no git (pequenos e úteis como referência)
+!outputs/models/labels.json
 !ml/outputs/config.json
 !ml/outputs/test_metrics.json
 !ml/outputs/classification_report.txt
 
-# =============================================================================
-# Node / Frontend
-# =============================================================================
+# ── Capturas da câmera ────────────────────────────────────────────────────────
+capture_*.jpg
+capture_*.png
+
+# ── Variáveis de ambiente ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
 node_modules/
 frontend/dist/
 frontend/.cache/
 *.tsbuildinfo
 
-# =============================================================================
-# Docker
-# =============================================================================
+# ── Docker ────────────────────────────────────────────────────────────────────
 .docker/
 
-# =============================================================================
-# IDEs
-# =============================================================================
+# ── IDEs ──────────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.code-workspace
 .claude/settings.local.json
 
-# =============================================================================
-# OS
-# =============================================================================
-.DS_Store
+# ── Windows ───────────────────────────────────────────────────────────────────
 Thumbs.db
 desktop.ini
 ehthumbs.db
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store

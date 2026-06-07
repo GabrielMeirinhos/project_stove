@@ -1,0 +1,9 @@
+tensorflow
+opencv-python
+scikit-learn
+matplotlib
+seaborn
+kagglehub
+numpy
+tensorboard
+# tensorflow-addons
