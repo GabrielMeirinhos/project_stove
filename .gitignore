@@ -5,6 +5,35 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.so
+*.egg
+*.egg-info/
+build/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+
+# =============================================================================
+# ML Artifacts (arquivos pesados — nunca commitar)
+# =============================================================================
+# Datasets — baixados via download_dataset.py, não vão ao repositório
+ml/datasets/
+ml/training/datasets_raw/
+# Modelos e outputs de treino
+ml/models/
+ml/checkpoints/
+ml/outputs/models/
+ml/outputs/logs/
+ml/outputs/plots/
+ml/training/outputs/
+# Paths legados (pré-reorganização)
+outputs/
 .Python
 
 # ── Dataset ───────────────────────────────────────────────────────────────────
