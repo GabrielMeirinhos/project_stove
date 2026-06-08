@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stove - Inteligência para sua Estufa</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#56ffa8",
+                    "on-primary-fixed": "#002110",
+                    "cyan-accent": "#00E5FF",
+                    "background": "#FFFFFF",
+                    "primary-container": "#00ff9d",
+                    "inverse-primary": "#006d40",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-tint": "#00e38b",
+                    "on-surface-variant": "#44494a",
+                    "tertiary-fixed-dim": "#d1bcff",
+                    "surface-container-lowest": "#FFFFFF",
+                    "tertiary-container": "#e7d9ff",
+                    "tertiary-fixed": "#e9ddff",
+                    "surface-container-high": "#f0f1f2",
+                    "surface-container-low": "#f8f9fa",
+                    "primary": "#006d40",
+                    "on-background": "#101416",
+                    "on-secondary": "#00363d",
+                    "surface-container": "#f8f9fa",
+                    "on-secondary-container": "#00616d",
+                    "on-tertiary-fixed-variant": "#5700c9",
+                    "primary-fixed-dim": "#00e38b",
+                    "emerald-glow": "#00FF9D",
+                    "surface-dim": "#e0e3e5",
+                    "on-secondary-fixed": "#001f24",
+                    "on-tertiary-fixed": "#23005b",
+                    "on-error-container": "#ffdad6",
+                    "on-primary-container": "#007143",
+                    "on-surface": "#101416",
+                    "on-tertiary": "#3c0090",
+                    "on-tertiary-container": "#7623ff",
+                    "glass-border": "rgba(0, 200, 150, 0.15)",
+                    "obsidian-surface": "#101416",
+                    "secondary-container": "#00e3fd",
+                    "secondary-fixed-dim": "#00daf3",
+                    "error": "#ba1a1a",
+                    "tertiary": "#fffaff",
+                    "surface": "#FFFFFF",
+                    "inverse-surface": "#2d3133",
+                    "on-secondary-fixed-variant": "#004f58",
+                    "inverse-on-surface": "#f0f1f2",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#9cf0ff",
+                    "outline-variant": "#c4c7c5",
+                    "surface-bright": "#f8f9fa",
+                    "surface-variant": "#e0e3e5",
+                    "outline": "#747978",
+                    "secondary": "#006874",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "slate-muted": "#5c6360",
+                    "on-primary-fixed-variant": "#00522f",
+                    "chlorophyll": "#00A67E"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "section-gap": "8rem",
+                    "gutter": "1.5rem",
+                    "margin-desktop": "5rem",
+                    "margin-mobile": "1.5rem",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "title-lg": ["Manrope"],
+                    "display-xl": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "label-caps": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "headline-lg": ["Manrope"]
+            },
+            "fontSize": {
+                    "title-lg": ["24px", {"lineHeight": "1.3", "fontWeight": "800"}],
+                    "display-xl": ["96px", {"lineHeight": "1.1", "letterSpacing": "-0.05em", "fontWeight": "800"}],
+                    "headline-md": ["36px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.2em", "fontWeight": "800"}],
+                    "headline-lg-mobile": ["48px", {"lineHeight": "1.2", "fontWeight": "800"}],
+                    "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-lg": ["72px", {"lineHeight": "1.1", "letterSpacing": "-0.03em", "fontWeight": "800"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FFFFFF;
+            color: #101416;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 166, 126, 0.15);
+        }
+        .shadow-soft {
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        }
+        .pulse-dot {
+            animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(.33); }
+            80%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface bg-white">
+<!-- TopNavBar -->
+<nav class="fixed top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-container-max rounded-full bg-white/70 backdrop-blur-xl border border-glass-border shadow-[0_4px_20px_rgba(0,166,126,0.08)] flex justify-between items-center px-8 py-4 z-50">
+<div class="flex items-center gap-2">
+<span class="font-title-lg text-title-lg text-chlorophyll tracking-tighter">Stove</span>
+</div>
+<div class="hidden md:flex items-center gap-8 font-body-md text-body-md">
+<a class="text-on-surface-variant hover:text-chlorophyll transition-colors font-bold" href="#">Como funciona</a>
+<a class="text-on-surface-variant hover:text-chlorophyll transition-colors font-bold" href="#">Benefícios</a>
+</div>
+<button class="bg-chlorophyll text-white px-6 py-2 rounded-full font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-chlorophyll/20">
+            Entrar
+        </button>
+</nav>
+<!-- Hero Section -->
+<header class="relative pt-40 pb-20 px-margin-mobile md:px-margin-desktop overflow-hidden bg-white">
+<div class="max-w-container-max mx-auto grid lg:grid-cols-2 gap-12 items-center">
+<div class="z-10">
+<span class="inline-block bg-chlorophyll/10 text-chlorophyll px-4 py-1 rounded-full font-label-caps text-label-caps mb-6">
+                    MONITORAMENTO INTELIGENTE
+                </span>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-6">
+                    Sua estufa, <br/><span class="text-chlorophyll">sempre sob controle</span>
+</h1>
+<p class="font-body-lg text-body-lg text-slate-muted max-w-lg mb-8 leading-relaxed">
+                    Monitore temperatura, umidade e saúde das plantas em tempo real — de qualquer lugar, pelo celular ou computador.
+                </p>
+<div class="flex flex-wrap gap-4">
+<button class="bg-chlorophyll text-white px-8 py-4 rounded-full font-bold hover:shadow-xl hover:shadow-chlorophyll/30 transition-all flex items-center gap-2">
+                        Começar agora
+                        <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<button class="border border-outline-variant text-on-surface px-8 py-4 rounded-full font-bold hover:bg-surface-container-low transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">play_circle</span>
+                        Ver demonstração
+                    </button>
+</div>
+</div>
+<div class="relative lg:h-[600px] flex justify-center items-center">
+<div class="relative w-full max-w-md md:max-w-xl aspect-square lg:aspect-auto">
+<div class="absolute inset-0 bg-gradient-to-tr from-chlorophyll/10 to-transparent rounded-full blur-3xl opacity-40 -z-10"></div>
+<div class="glass-panel p-4 md:p-6 rounded-2xl shadow-soft rotate-3 hover:rotate-0 transition-transform duration-700">
+<img alt="Interface do sistema" class="rounded-xl w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVggWIMbopd5QEkU5PryIKOq8HcTA5ntlwctrRahEOEF2jsI_TY2By7zXabduFH_MTuMxe7oyABYRuf4OSgiV1nBCGTiQUN6QqJOmSshL8whO0nYl9TLuUCIYWUBGI8BX0VqbMDoCxAO3mxkjEfBCyMAHCGnRwtGiOVildcK2z9lGWjF_n8lEYj1cGEsxCZufbhF0_vXhBSk93p6b5kLlHIC4pd2RoQr10tFKiCFi5qXyArol5C76ADO4_nnjxKuJCLyCIapgCQt2p"/>
+</div>
+<!-- Floating Stat Cards -->
+<div class="absolute -top-4 -right-4 glass-panel p-4 rounded-xl shadow-lg flex items-center gap-3 animate-bounce" style="animation-duration: 4s;">
+<span class="bg-chlorophyll p-2 rounded-lg text-white material-symbols-outlined">thermostat</span>
+<div>
+<p class="text-[10px] uppercase tracking-wider text-slate-muted font-bold">Temperatura</p>
+<p class="font-bold text-on-surface">24.5°C</p>
+</div>
+</div>
+<div class="absolute -bottom-6 -left-6 glass-panel p-4 rounded-xl shadow-lg flex items-center gap-3 animate-bounce" style="animation-duration: 5s;">
+<span class="bg-cyan-accent p-2 rounded-lg text-white material-symbols-outlined">humidity_percentage</span>
+<div>
+<p class="text-[10px] uppercase tracking-wider text-slate-muted font-bold">Umidade</p>
+<p class="font-bold text-on-surface">68%</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Features Section -->
+<section class="py-section-gap px-margin-mobile md:px-margin-desktop bg-[#F8FAFC]">
+<div class="max-w-container-max mx-auto">
+<div class="text-center mb-16">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-4">Simples de usar, inteligente por dentro</h2>
+<p class="font-body-lg text-body-lg text-slate-muted max-w-2xl mx-auto">Tecnologia de ponta traduzida em uma interface fácil e acessível para todos os cultivadores.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Card 01 -->
+<div class="md:col-span-2 glass-panel p-8 rounded-lg shadow-soft group hover:border-chlorophyll/30 transition-all bg-white">
+<div class="text-chlorophyll font-bold text-4xl mb-6 opacity-20">01</div>
+<h3 class="font-title-lg text-title-lg mb-2 text-on-surface">Sensores coletam tudo</h3>
+<p class="text-slate-muted mb-8">Nossos sensores de alta precisão captam cada variação do ambiente, desde luz UV até CO2.</p>
+<img alt="Sensores" class="w-full h-48 object-cover rounded-lg group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc-SuH_fdidNHepwqZi-BByBZ4BqZfo8SvRCDG-WirEquL_6atqLUroNvcY7zZN3hW0Jpfqc5Vk2zre9b1mZ2cwhtngUmeJPnPwf6O8vyDh1HZdTtgkeXZgj3YJF-00F0xdT04VySfLMtdvRH80-m7PZNA9AkKyDHsIeH0R3fVY0ReXASnZtdVz55uA5mFUyNhYtjerO1mA_Vfw_fQbijnpE-bFGLwQkFiWBF6p_j1Sdk1SJWXdt2J7Q3MKViSolWQ8JniDgcAhEfb"/>
+</div>
+<!-- Card 02 -->
+<div class="glass-panel p-8 rounded-lg shadow-soft flex flex-col justify-between group hover:border-chlorophyll/30 transition-all bg-white">
+<div>
+<div class="text-chlorophyll font-bold text-4xl mb-6 opacity-20">02</div>
+<h3 class="font-title-lg text-title-lg mb-2 text-on-surface">Dados em segundos</h3>
+<p class="text-slate-muted text-sm">Latência zero para você agir no momento certo e salvar sua colheita.</p>
+</div>
+<div class="mt-6 flex justify-center">
+<span class="material-symbols-outlined text-chlorophyll text-6xl animate-pulse">speed</span>
+</div>
+</div>
+<!-- Card 03 -->
+<div class="glass-panel p-8 rounded-lg shadow-soft flex flex-col justify-between group hover:border-chlorophyll/30 transition-all bg-white">
+<div>
+<div class="text-chlorophyll font-bold text-4xl mb-6 opacity-20">03</div>
+<h3 class="font-title-lg text-title-lg mb-2 text-on-surface">Câmera IA</h3>
+<p class="text-slate-muted text-sm">Nossa inteligência artificial identifica pragas e deficiências em tempo real.</p>
+</div>
+<div class="mt-6 overflow-hidden rounded-lg">
+<img alt="Visão computacional" class="w-full h-32 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBw5foMJI5En8ywTQ27fwqipBqj8OLYk_qi2IPYfBE5SEZXdrsK8y6Wd_2jIiRFSJmTrcN3Ig9L8sIayhvkxdnJll6qFvR-2UzM8MjeGsam-kyfzDwhf2X0vxxn4XBKJ-I0p6P7lid564PtuK1ZWvt1UeGB_snpw6hitbvTXKWsRL2gFdTbU3SL1fR-WCNXpxGYz11S3o0vodj3fODKJNwZzWgND-m8M9_p_fnAoO1j6AEa64_qFLtN-H0ylDC_USmMEFldABuHC41d"/>
+</div>
+</div>
+<!-- Card 04 -->
+<div class="md:col-span-4 glass-panel p-8 rounded-lg shadow-soft flex flex-col md:flex-row items-center gap-8 group hover:border-chlorophyll/30 transition-all bg-white">
+<div class="flex-1">
+<div class="text-chlorophyll font-bold text-4xl mb-4 opacity-20">04</div>
+<h3 class="font-title-lg text-title-lg mb-2 text-on-surface">Alertas instantâneos</h3>
+<p class="text-slate-muted">Notificações personalizadas no seu celular sempre que algo fugir do padrão configurado por você.</p>
+</div>
+<div class="flex-1 bg-surface-container-low p-4 rounded-xl shadow-inner border border-outline-variant/30 w-full">
+<div class="flex items-center gap-3 p-3 bg-red-50 border-l-4 border-red-500 rounded shadow-sm">
+<span class="material-symbols-outlined text-red-500">warning</span>
+<span class="text-sm font-bold text-red-900">Alerta: Temperatura Alta (29°C)</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Benefits Section -->
+<section class="py-section-gap px-margin-mobile md:px-margin-desktop overflow-hidden bg-white">
+<div class="max-w-container-max mx-auto">
+<div class="grid lg:grid-cols-2 gap-20 items-center">
+<div class="relative">
+<div class="rounded-3xl overflow-hidden shadow-2xl relative z-10 border border-glass-border">
+<img alt="Monitoramento de saúde inteligente" class="w-full aspect-square object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh6QdENLS55X7F0WHL1jCB3lhAzbx2iWvlw4Oecpdaj34obGIhXygQx3o47VhvP5vFcbHE-NWzqU60WzvlSZzAPSdPB6cfXHoFgVJWS2mDTUg-9JRd7d5oDTHc3iUR6t_jvnJq15m4ARwSPPBvwtBVOSrINOFy2fxVzxfCjYpN9Gm-bUVz82v0SI-gBwkhI3Mc5Ka_X22eYmXqtbuECBAhCYiPJ2fHgBx-dbn70iS9zVPh_nBgNLUt-sXycoi0VVIVjrSaBeBn-chz"/>
+</div>
+<div class="absolute -top-10 -left-10 w-40 h-40 bg-chlorophyll/10 rounded-full blur-2xl"></div>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-10">Tudo que você precisa para cultivar melhor</h2>
+<div class="space-y-12">
+<div class="flex gap-6">
+<div class="w-12 h-12 shrink-0 bg-chlorophyll/10 flex items-center justify-center rounded-xl">
+<span class="material-symbols-outlined text-chlorophyll" style="font-variation-settings: 'FILL' 1;">visibility</span>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg mb-2 text-on-surface">Visão em Tempo Real</h4>
+<p class="text-slate-muted">Acesse a câmera da sua estufa de qualquer lugar do mundo e veja o crescimento das suas plantas minuto a minuto.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="w-12 h-12 shrink-0 bg-chlorophyll/10 flex items-center justify-center rounded-xl">
+<span class="material-symbols-outlined text-chlorophyll" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg mb-2 text-on-surface">Detecção Precoce</h4>
+<p class="text-slate-muted">Nossa IA identifica sinais de estresse hídrico ou doenças antes mesmo de serem visíveis ao olho nu.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="w-12 h-12 shrink-0 bg-chlorophyll/10 flex items-center justify-center rounded-xl">
+<span class="material-symbols-outlined text-chlorophyll" style="font-variation-settings: 'FILL' 1;">lock</span>
+</div>
+<div>
+<h4 class="font-title-lg text-title-lg mb-2 text-on-surface">Acesso Seguro</h4>
+<p class="text-slate-muted">Seus dados e imagens são criptografados de ponta a ponta, garantindo a privacidade total do seu cultivo.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Call to Action -->
+<section class="pb-section-gap px-margin-mobile md:px-margin-desktop bg-white">
+<div class="max-w-container-max mx-auto bg-surface-container-high rounded-3xl p-12 md:p-24 text-center relative overflow-hidden border border-outline-variant/20 shadow-xl">
+<div class="absolute inset-0 bg-gradient-to-br from-chlorophyll/5 to-transparent"></div>
+<div class="relative z-10">
+<h2 class="font-headline-lg-mobile md:font-headline-md text-on-surface mb-6">Pronto para dar o próximo passo no seu cultivo?</h2>
+<p class="text-slate-muted text-body-lg mb-10 max-w-xl mx-auto">Junte-se a milhares de cultivadores que já utilizam o Stove para otimizar suas colheitas.</p>
+<div class="flex flex-col md:flex-row justify-center gap-4">
+<button class="bg-chlorophyll text-white px-10 py-5 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-lg shadow-chlorophyll/30">Começar Teste Grátis</button>
+<button class="bg-white text-on-surface border border-outline-variant px-10 py-5 rounded-full font-bold text-lg hover:bg-surface-container-low transition-all">Falar com Consultor</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full bg-white border-t border-outline-variant/30 flex flex-col md:flex-row justify-between items-center px-margin-desktop py-12 gap-8">
+<div class="flex flex-col gap-4">
+<span class="font-title-lg text-title-lg text-chlorophyll">Stove</span>
+<p class="text-slate-muted font-body-md text-body-md max-w-xs">Monitoramento inteligente para a próxima geração da agricultura sustentável.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8 font-body-md text-body-md">
+<a class="text-on-surface-variant hover:text-chlorophyll transition-colors font-bold" href="#">Privacidade</a>
+<a class="text-on-surface-variant hover:text-chlorophyll transition-colors font-bold" href="#">Termos de Uso</a>
+<a class="text-on-surface-variant hover:text-chlorophyll transition-colors font-bold" href="#">Contato</a>
+<a class="text-on-surface-variant hover:text-chlorophyll transition-colors font-bold" href="#">Suporte</a>
+</div>
+<div class="text-slate-muted font-body-md text-body-md text-center md:text-right">
+            © 2024 Stove Intelligent Monitoring. <br class="md:hidden"/>Todos os direitos reservados.
+        </div>
+</footer>
+<script>
+        // Simple scroll reveal interaction
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-10');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            section.classList.add('transition-all', 'duration-1000', 'opacity-0', 'translate-y-10');
+            observer.observe(section);
+        });
+    </script>
+</body></html>

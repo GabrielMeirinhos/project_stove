@@ -1,246 +1,280 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html class="light" lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stove — Monitoramento inteligente de estufas</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-</head>
-<body>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Stove - Inteligência para sua Estufa</title>
+<meta name="description" content="Landing page da Stove para monitoramento inteligente de estufas, com métricas em tempo real, visão por câmera e alertas automáticos." />
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --cream:#faf8f4;
-  --cream2:#f2efe9;
-  --ink:#1a1814;
-  --ink2:#5c5850;
-  --ink3:#9c9890;
-  --green:#3a6b1f;
-  --green-light:#eaf3de;
-  --border:rgba(26,24,20,0.1);
-  --serif:'Lora',serif;
-  --sans:'DM Sans',sans-serif;
-}
-body{font-family:var(--sans);background:var(--cream);color:var(--ink);line-height:1.6;overflow-x:hidden}
-a{color:inherit;text-decoration:none}
-nav{padding:1.25rem 2.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--cream)}
-.logo{font-family:var(--serif);font-size:1.1rem;letter-spacing:0.02em;color:var(--ink)}
-.logo span{color:var(--green)}
-nav ul{display:flex;gap:2rem;list-style:none}
-nav ul a{font-size:0.875rem;color:var(--ink2);transition:color .2s}
-nav ul a:hover{color:var(--ink)}
-.nav-btn{font-size:0.8rem;font-weight:500;background:var(--ink);color:#faf8f4;padding:0.5rem 1.25rem;border-radius:100px;transition:opacity .2s}
-.nav-btn:hover{opacity:0.8}
-.hero{padding:7rem 2.5rem 5rem;max-width:860px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center}
-.hero-eyebrow{font-size:0.75rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--green);margin-bottom:1.25rem;display:flex;align-items:center;gap:8px}
-.dot-live{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 2s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.hero h1{font-family:var(--serif);font-size:3rem;line-height:1.1;color:var(--ink);margin-bottom:1.25rem;font-weight:400}
-.hero h1 em{color:var(--green);font-style:italic}
-.hero-desc{font-size:1rem;color:var(--ink2);line-height:1.7;margin-bottom:2rem}
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap}
-.btn-a{font-size:0.875rem;font-weight:500;background:var(--green);color:#fff;padding:0.75rem 1.5rem;border-radius:100px;transition:opacity .2s}
-.btn-a:hover{opacity:.85}
-.btn-b{font-size:0.875rem;color:var(--ink2);padding:0.75rem 1.5rem;border-radius:100px;border:1px solid var(--border);transition:border-color .2s,color .2s}
-.btn-b:hover{border-color:var(--ink3);color:var(--ink)}
-.hero-widget{background:#fff;border:1px solid var(--border);border-radius:20px;padding:1.5rem}
-.widget-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
-.widget-title{font-size:0.75rem;font-weight:500;color:var(--ink2)}
-.widget-status{font-size:0.65rem;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#27500a;background:#eaf3de;padding:3px 10px;border-radius:100px}
-.readings{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
-.reading-card{background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:0.875rem}
-.reading-val{font-family:var(--serif);font-size:1.5rem;color:var(--ink);margin-bottom:2px}
-.reading-lbl{font-size:0.7rem;color:var(--ink3);font-weight:500;letter-spacing:0.05em;text-transform:uppercase}
-.mini-bar{margin-top:8px;height:3px;background:var(--border);border-radius:2px}
-.mini-bar-fill{height:100%;border-radius:2px;background:var(--green)}
-.camera-row{background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:0.875rem;display:flex;align-items:center;justify-content:space-between}
-.cam-left{display:flex;align-items:center;gap:10px}
-.cam-icon{width:32px;height:32px;border-radius:8px;background:#eaf3de;display:flex;align-items:center;justify-content:center;font-size:15px}
-.cam-label{font-size:0.8rem;font-weight:500;color:var(--ink)}
-.cam-sub{font-size:0.7rem;color:var(--ink3)}
-.cam-badge{font-size:0.65rem;font-weight:500;background:#eaf3de;color:#27500a;padding:3px 10px;border-radius:100px}
-.divider{height:1px;background:var(--border);margin:0 2.5rem}
-section{padding:5rem 2.5rem;max-width:860px;margin:0 auto}
-.section-label{font-size:0.7rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:1.5rem}
-.section-label span{color:var(--green)}
-h2{font-family:var(--serif);font-size:2.25rem;color:var(--ink);font-weight:400;line-height:1.15;margin-bottom:0.75rem}
-h2 em{color:var(--green);font-style:italic}
-.section-intro{font-size:1rem;color:var(--ink2);max-width:480px;line-height:1.7}
-.how-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-top:3rem}
-.how-card{background:#fff;padding:2rem;transition:background .2s}
-.how-card:hover{background:var(--cream)}
-.how-num{font-family:var(--serif);font-size:2rem;color:var(--green);font-weight:400;margin-bottom:1rem;line-height:1}
-.how-card h3{font-size:1rem;font-weight:500;color:var(--ink);margin-bottom:0.5rem}
-.how-card p{font-size:0.875rem;color:var(--ink2);line-height:1.65}
-.benefits-list{display:flex;flex-direction:column;margin-top:3rem;border:1px solid var(--border);border-radius:20px;overflow:hidden}
-.benefit-row{display:flex;align-items:flex-start;gap:1.25rem;padding:1.5rem 2rem;border-bottom:1px solid var(--border);background:#fff;transition:background .2s}
-.benefit-row:last-child{border-bottom:none}
-.benefit-row:hover{background:var(--cream)}
-.benefit-icon{width:36px;height:36px;flex-shrink:0;background:#eaf3de;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#3a6b1f;font-size:16px;margin-top:2px}
-.benefit-body h3{font-size:0.95rem;font-weight:500;color:var(--ink);margin-bottom:4px}
-.benefit-body p{font-size:0.875rem;color:var(--ink2);line-height:1.6}
-.cta-block{text-align:center;padding:5rem 2.5rem 6rem;max-width:640px;margin:0 auto}
-.cta-block h2{font-family:var(--serif);font-size:2.5rem;font-weight:400;margin-bottom:1rem}
-.cta-block p{color:var(--ink2);font-size:1rem;margin-bottom:2rem}
-.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-footer{border-top:1px solid var(--border);padding:1.5rem 2.5rem;display:flex;align-items:center;justify-content:space-between;font-size:0.8rem;color:var(--ink3);background:var(--cream)}
-@media(max-width:620px){
-  .hero{grid-template-columns:1fr;gap:2.5rem;padding:5rem 1.5rem 3rem}
-  .how-grid{grid-template-columns:1fr}
-  nav ul{display:none}
-}
-</style>
+  :root {
+    --header-offset: 7rem;
+  }
 
-<nav>
-  <div class="logo">Stove<span>.</span></div>
-  <ul>
-    <li><a href="#como">Como funciona</a></li>
-    <li><a href="#beneficios">Benefícios</a></li>
-  </ul>
-  <a class="nav-btn" href="https://github.com/GabrielMeirinhos/project_stove" target="_blank">Ver no GitHub</a>
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #FFFFFF;
+    color: #101416;
+    overflow-x: hidden;
+    font-family: 'Manrope', sans-serif;
+  }
+
+  section,
+  header,
+  footer {
+    scroll-margin-top: var(--header-offset);
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 166, 126, 0.15);
+  }
+
+  .shadow-soft {
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+  }
+
+  .pulse-dot {
+    animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(.33); }
+    80%, 100% { opacity: 0; }
+  }
+
+  @media (max-width: 767px) {
+    :root {
+      --header-offset: 6rem;
+    }
+  }
+</style>
+</head>
+<body class="bg-white text-on-surface">
+<nav class="fixed top-4 left-1/2 z-50 flex w-[92%] max-w-[1280px] -translate-x-1/2 items-center justify-between rounded-full border border-[rgba(0,200,150,0.15)] bg-white/75 px-5 py-3 shadow-[0_4px_20px_rgba(0,166,126,0.08)] backdrop-blur-xl md:px-8 md:py-4">
+  <a class="flex items-center gap-2" href="#top" aria-label="Ir para o topo">
+    <span class="text-lg font-extrabold tracking-tighter text-[#00A67E]">Stove</span>
+  </a>
+
+  <div class="hidden items-center gap-8 md:flex">
+    <a class="font-bold text-[14px] text-on-surface-variant transition-colors hover:text-[#00A67E]" href="#como-funciona">Como funciona</a>
+    <a class="font-bold text-[14px] text-on-surface-variant transition-colors hover:text-[#00A67E]" href="#beneficios">Benefícios</a>
+    <a class="font-bold text-[14px] text-on-surface-variant transition-colors hover:text-[#00A67E]" href="#cta-final">Contato</a>
+  </div>
+
+  <a class="rounded-full bg-[#00A67E] px-5 py-2 text-sm font-bold text-white shadow-lg shadow-[#00A67E]/20 transition-transform hover:scale-105 active:scale-95" href="/app/">
+    Entrar
+  </a>
 </nav>
 
-<div class="hero">
-  <div class="hero-text">
-    <div class="hero-eyebrow"><span class="dot-live"></span> Sistema em operação</div>
-    <h1>Sua estufa, <em>sempre</em> sob controle</h1>
-    <p class="hero-desc">Monitore temperatura, umidade e saúde das plantas em tempo real — de qualquer lugar, pelo celular ou computador.</p>
-    <div class="hero-btns">
-      <a class="btn-a" href="/app/">Começar agora</a>
-      <a class="btn-b" href="#como">Ver demonstração</a>
+<header id="top" class="relative overflow-hidden bg-white px-6 pb-20 pt-40 md:px-20 lg:px-24 lg:pt-44">
+  <div class="mx-auto grid max-w-[1280px] items-center gap-12 lg:grid-cols-2">
+    <div class="z-10">
+      <span class="mb-6 inline-block rounded-full bg-[#00A67E]/10 px-4 py-1 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#00A67E]">
+        Monitoramento inteligente
+      </span>
+      <h1 class="mb-6 text-5xl font-extrabold leading-[1.05] tracking-[-0.04em] text-on-surface md:text-[72px] md:leading-[1.08]">
+        Sua estufa, <br/><span class="text-[#00A67E]">sempre sob controle</span>
+      </h1>
+      <p class="mb-8 max-w-xl text-lg leading-relaxed text-[#5c6360]">
+        Monitore temperatura, umidade e saúde das plantas em tempo real — de qualquer lugar, pelo celular ou computador.
+      </p>
+      <div class="flex flex-wrap gap-4">
+        <a class="inline-flex items-center gap-2 rounded-full bg-[#00A67E] px-8 py-4 font-bold text-white shadow-lg shadow-[#00A67E]/20 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-[#00A67E]/30 active:scale-95" href="/app/">
+          Começar agora
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+        <a class="inline-flex items-center gap-2 rounded-full border border-outline-variant bg-white px-8 py-4 font-bold text-on-surface transition-colors hover:bg-surface-container-low" href="#como-funciona">
+          <span class="material-symbols-outlined">play_circle</span>
+          Ver demonstração
+        </a>
+      </div>
     </div>
-  </div>
 
-  <div class="hero-widget">
-    <div class="widget-header">
-      <span class="widget-title">Estufa Principal — Agora</span>
-      <span class="widget-status">● ao vivo</span>
-    </div>
-    <div class="readings">
-      <div class="reading-card">
-        <div class="reading-val">24°C</div>
-        <div class="reading-lbl">Temperatura</div>
-        <div class="mini-bar"><div class="mini-bar-fill" style="width:62%"></div></div>
-      </div>
-      <div class="reading-card">
-        <div class="reading-val">67%</div>
-        <div class="reading-lbl">Umidade</div>
-        <div class="mini-bar"><div class="mini-bar-fill" style="width:67%"></div></div>
-      </div>
-      <div class="reading-card">
-        <div class="reading-val">6.8</div>
-        <div class="reading-lbl">pH do solo</div>
-        <div class="mini-bar"><div class="mini-bar-fill" style="width:48%"></div></div>
-      </div>
-      <div class="reading-card">
-        <div class="reading-val">580</div>
-        <div class="reading-lbl">Luz (lux)</div>
-        <div class="mini-bar"><div class="mini-bar-fill" style="width:78%"></div></div>
-      </div>
-    </div>
-    <div class="camera-row">
-      <div class="cam-left">
-        <div class="cam-icon">🌿</div>
-        <div>
-          <div class="cam-label">Análise de saúde</div>
-          <div class="cam-sub">Última verificação: agora</div>
+    <div class="relative flex items-center justify-center lg:h-[600px]">
+      <div class="relative aspect-square w-full max-w-md md:max-w-xl lg:aspect-auto">
+        <div class="absolute inset-0 -z-10 rounded-full bg-gradient-to-tr from-[#00A67E]/10 to-transparent opacity-40 blur-3xl"></div>
+        <div class="glass-panel rounded-2xl p-4 shadow-soft transition-transform duration-700 md:p-6 md:rotate-3 hover:rotate-0">
+          <img src="/landing/img/screen.png" alt="Interface do sistema" class="h-full w-full rounded-xl object-cover" />
+     </div>
+        <div class="absolute -right-4 -top-4 flex animate-bounce items-center gap-3 rounded-xl border border-[rgba(0,166,126,0.15)] bg-white/90 p-4 shadow-lg backdrop-blur-xl" style="animation-duration: 4s;">
+          <span class="material-symbols-outlined rounded-lg bg-[#00A67E] p-2 text-white">thermostat</span>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-[#5c6360]">Temperatura</p>
+            <p class="font-bold text-on-surface">24.5°C</p>
+          </div>
+        </div>
+
+        <div class="absolute -bottom-6 -left-6 flex animate-bounce items-center gap-3 rounded-xl border border-[rgba(0,166,126,0.15)] bg-white/90 p-4 shadow-lg backdrop-blur-xl" style="animation-duration: 5s;">
+          <span class="material-symbols-outlined rounded-lg bg-[#00E5FF] p-2 text-white">humidity_percentage</span>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-[#5c6360]">Umidade</p>
+            <p class="font-bold text-on-surface">68%</p>
+          </div>
         </div>
       </div>
-      <span class="cam-badge">Planta saudável</span>
     </div>
   </div>
-</div>
+</header>
 
-<div class="divider"></div>
+<section id="como-funciona" class="bg-[#F8FAFC] px-6 py-28 md:px-20 lg:px-24">
+  <div class="mx-auto max-w-[1280px]">
+    <div class="mb-16 text-center">
+      <h2 class="mb-4 text-4xl font-bold tracking-[-0.03em] text-on-surface md:text-[36px]">Simples de usar, inteligente por dentro</h2>
+      <p class="mx-auto max-w-2xl text-lg leading-relaxed text-[#5c6360]">Tecnologia de ponta traduzida em uma interface fácil e acessível para todos os cultivadores.</p>
+    </div>
 
-<section id="como">
-  <div class="section-label"><span>///</span> como funciona</div>
-  <h2>Simples de usar,<br><em>inteligente</em> por dentro</h2>
-  <p class="section-intro">O sistema cuida de tudo automaticamente. Você só acompanha o que está acontecendo.</p>
-  <div class="how-grid">
-    <div class="how-card">
-      <div class="how-num">01</div>
-      <h3>Sensores coletam tudo</h3>
-      <p>Pequenos dispositivos na estufa medem temperatura, umidade do ar e do solo, luminosidade e pH continuamente — sem interrupção.</p>
-    </div>
-    <div class="how-card">
-      <div class="how-num">02</div>
-      <h3>Dados chegam em segundos</h3>
-      <p>As informações são enviadas automaticamente para o sistema em tempo real, sem necessidade de cabos ou configurações complicadas.</p>
-    </div>
-    <div class="how-card">
-      <div class="how-num">03</div>
-      <h3>Câmera analisa as plantas</h3>
-      <p>Uma câmera fotografa as plantas regularmente. A inteligência artificial identifica sinais de doenças ou pragas antes que se tornem um problema.</p>
-    </div>
-    <div class="how-card">
-      <div class="how-num">04</div>
-      <h3>Você recebe alertas</h3>
-      <p>Quando algo sai do padrão ideal, o sistema avisa imediatamente. Nada passa despercebido — mesmo que você esteja longe da estufa.</p>
-    </div>
-  </div>
-</section>
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+      <article class="glass-panel group rounded-lg bg-white p-8 shadow-soft transition-all hover:border-[#00A67E]/30 md:col-span-2">
+        <div class="mb-6 text-4xl font-bold text-[#00A67E] opacity-20">01</div>
+        <h3 class="mb-2 text-2xl font-extrabold text-on-surface">Sensores coletam tudo</h3>
+        <p class="mb-8 text-[#5c6360]">Nossos sensores de alta precisão captam cada variação do ambiente, desde luz UV até CO2.</p>
+        <img alt="Sensores" class="h-48 w-full rounded-lg object-cover transition-transform duration-500 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc-SuH_fdidNHepwqZi-BByBZ4BqZfo8SvRCDG-WirEquL_6atqLUroNvcY7zZN3hW0Jpfqc5Vk2zre9b1mZ2cwhtngUmeJPnPwf6O8vyDh1HZdTtgkeXZgj3YJF-00F0xdT04VySfLMtdvRH80-m7PZNA9AkKyDHsIeH0R3fVY0ReXASnZtdVz55uA5mFUyNhYtjerO1mA_Vfw_fQbijnpE-bFGLwQkFiWBF6p_j1Sdk1SJWXdt2J7Q3MKViSolWQ8JniDgcAhEfb"/>
+      </article>
 
-<div class="divider"></div>
+      <article class="glass-panel flex flex-col justify-between rounded-lg bg-white p-8 shadow-soft transition-all hover:border-[#00A67E]/30">
+        <div>
+          <div class="mb-6 text-4xl font-bold text-[#00A67E] opacity-20">02</div>
+          <h3 class="mb-2 text-2xl font-extrabold text-on-surface">Dados em segundos</h3>
+          <p class="text-sm text-[#5c6360]">Latência zero para você agir no momento certo e salvar sua colheita.</p>
+        </div>
+        <div class="mt-6 flex justify-center">
+          <span class="material-symbols-outlined animate-pulse text-6xl text-[#00A67E]">speed</span>
+        </div>
+      </article>
 
-<section id="beneficios">
-  <div class="section-label"><span>///</span> benefícios</div>
-  <h2>Tudo que você precisa<br>para <em>cultivar melhor</em></h2>
-  <div class="benefits-list">
-    <div class="benefit-row">
-      <div class="benefit-icon" aria-hidden="true"><i class="ti ti-eye"></i></div>
-      <div class="benefit-body">
-        <h3>Visão completa em tempo real</h3>
-        <p>Acompanhe todas as métricas da sua estufa em um único painel, atualizado automaticamente a cada momento.</p>
-      </div>
-    </div>
-    <div class="benefit-row">
-      <div class="benefit-icon" aria-hidden="true"><i class="ti ti-bell"></i></div>
-      <div class="benefit-body">
-        <h3>Alertas automáticos</h3>
-        <p>Receba notificações instantâneas quando a temperatura subir demais, a umidade cair ou qualquer outra condição sair do ideal.</p>
-      </div>
-    </div>
-    <div class="benefit-row">
-      <div class="benefit-icon" aria-hidden="true"><i class="ti ti-heart"></i></div>
-      <div class="benefit-body">
-        <h3>Detecção precoce de doenças</h3>
-        <p>A câmera analisa as folhas automaticamente e identifica doenças em estágio inicial, antes que se espalhem pela plantação.</p>
-      </div>
-    </div>
-    <div class="benefit-row">
-      <div class="benefit-icon" aria-hidden="true"><i class="ti ti-lock"></i></div>
-      <div class="benefit-body">
-        <h3>Acesso seguro para toda a equipe</h3>
-        <p>Cada pessoa da equipe acessa apenas o que é dela. O responsável geral enxerga tudo. Simples e seguro.</p>
-      </div>
-    </div>
-    <div class="benefit-row">
-      <div class="benefit-icon" aria-hidden="true"><i class="ti ti-device-mobile"></i></div>
-      <div class="benefit-body">
-        <h3>Funciona em qualquer dispositivo</h3>
-        <p>Acesse pelo celular, tablet ou computador. O painel se adapta à sua tela e funciona de onde você estiver.</p>
-      </div>
+      <article class="glass-panel flex flex-col justify-between rounded-lg bg-white p-8 shadow-soft transition-all hover:border-[#00A67E]/30">
+        <div>
+          <div class="mb-6 text-4xl font-bold text-[#00A67E] opacity-20">03</div>
+          <h3 class="mb-2 text-2xl font-extrabold text-on-surface">Câmera IA</h3>
+          <p class="text-sm text-[#5c6360]">Nossa inteligência artificial identifica pragas e deficiências em tempo real.</p>
+        </div>
+        <div class="mt-6 overflow-hidden rounded-lg">
+          <img alt="Visão computacional" class="h-32 w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBw5foMJI5En8ywTQ27fwqipBqj8OLYk_qi2IPYfBE5SEZXdrsK8y6Wd_2jIiRFSJmTrcN3Ig9L8sIayhvkxdnJll6qFvR-2UzM8MjeGsam-kyfzDwhf2X0vxxn4XBKJ-I0p6P7lid564PtuK1ZWvt1UeGB_snpw6hitbvTXKWsRL2gFdTbU3SL1fR-WCNXpxGYz11S3o0vodj3fODKJNwZzWgND-m8M9_p_fnAoO1j6AEa64_qFLtN-H0ylDC_USmMEFldABuHC41d"/>
+        </div>
+      </article>
+
+      <article class="glass-panel flex flex-col gap-8 rounded-lg bg-white p-8 shadow-soft transition-all hover:border-[#00A67E]/30 md:col-span-4 md:flex-row md:items-center">
+        <div class="flex-1">
+          <div class="mb-4 text-4xl font-bold text-[#00A67E] opacity-20">04</div>
+          <h3 class="mb-2 text-2xl font-extrabold text-on-surface">Alertas instantâneos</h3>
+          <p class="text-[#5c6360]">Notificações personalizadas no seu celular sempre que algo fugir do padrão configurado por você.</p>
+        </div>
+        <div class="w-full flex-1 rounded-xl border border-outline-variant/30 bg-surface-container-low p-4 shadow-inner">
+          <div class="flex items-center gap-3 rounded border-l-4 border-red-500 bg-red-50 p-3 shadow-sm">
+            <span class="material-symbols-outlined text-red-500">warning</span>
+            <span class="text-sm font-bold text-red-900">Alerta: Temperatura Alta (29°C)</span>
+          </div>
+        </div>
+      </article>
     </div>
   </div>
 </section>
 
-<div class="divider"></div>
+<section id="beneficios" class="overflow-hidden bg-white px-6 py-28 md:px-20 lg:px-24">
+  <div class="mx-auto max-w-[1280px]">
+    <div class="grid items-center gap-20 lg:grid-cols-2">
+      <div class="relative">
+        <div class="relative z-10 overflow-hidden rounded-3xl border border-[rgba(0,166,126,0.15)] shadow-2xl">
+          <img alt="Monitoramento de saúde inteligente" class="aspect-square w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh6QdENLS55X7F0WHL1jCB3lhAzbx2iWvlw4Oecpdaj34obGIhXygQx3o47VhvP5vFcbHE-NWzqU60WzvlSZzAPSdPB6cfXHoFgVJWS2mDTUg-9JRd7d5oDTHc3iUR6t_jvnJq15m4ARwSPPBvwtBVOSrINOFy2fxVzxfCjYpN9Gm-bUVz82v0SI-gBwkhI3Mc5Ka_X22eYmXqtbuECBAhCYiPJ2fHgBx-dbn70iS9zVPh_nBgNLUt-sXycoi0VVIVjrSaBeBn-chz"/>
+        </div>
+        <div class="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-[#00A67E]/10 blur-2xl"></div>
+      </div>
 
-<div class="cta-block">
-  <h2>Pronto para cuidar melhor da sua estufa?</h2>
-  <p>Configure em minutos e comece a monitorar suas plantas com tecnologia de ponta.</p>
-  <div class="cta-btns">
-    <a class="btn-a" href="/app/">Começar gratuitamente</a>
-    <a class="btn-b" href="mailto:stoveproject@gmail.com">Falar com a equipe</a>
+      <div>
+        <h2 class="mb-10 text-4xl font-bold tracking-[-0.03em] text-on-surface md:text-[36px]">Tudo que você precisa para cultivar melhor</h2>
+        <div class="space-y-12">
+          <div class="flex gap-6">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#00A67E]/10">
+              <span class="material-symbols-outlined text-[#00A67E]" style="font-variation-settings: 'FILL' 1;">visibility</span>
+            </div>
+            <div>
+              <h4 class="mb-2 text-2xl font-extrabold text-on-surface">Visão em Tempo Real</h4>
+              <p class="text-[#5c6360]">Acesse a câmera da sua estufa de qualquer lugar do mundo e veja o crescimento das suas plantas minuto a minuto.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-6">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#00A67E]/10">
+              <span class="material-symbols-outlined text-[#00A67E]" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+            </div>
+            <div>
+              <h4 class="mb-2 text-2xl font-extrabold text-on-surface">Detecção Precoce</h4>
+              <p class="text-[#5c6360]">Nossa IA identifica sinais de estresse hídrico ou doenças antes mesmo de serem visíveis ao olho nu.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-6">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#00A67E]/10">
+              <span class="material-symbols-outlined text-[#00A67E]" style="font-variation-settings: 'FILL' 1;">lock</span>
+            </div>
+            <div>
+              <h4 class="mb-2 text-2xl font-extrabold text-on-surface">Acesso Seguro</h4>
+              <p class="text-[#5c6360]">Seus dados e imagens são criptografados de ponta a ponta, garantindo a privacidade total do seu cultivo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<footer>
-  <div class="logo">Stove<span style="color:var(--green)">.</span></div>
-  <span>Monitoramento inteligente de estufas</span>
-  <a href="https://github.com/GabrielMeirinhos/project_stove" target="_blank" style="color:var(--ink3);transition:color .2s" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--ink3)'">GitHub ↗</a>
+<section id="cta-final" class="bg-white px-6 pb-28 md:px-20 lg:px-24">
+  <div class="mx-auto max-w-[1280px] overflow-hidden rounded-3xl border border-outline-variant/20 bg-surface-container-high p-12 text-center shadow-xl md:p-24 relative">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#00A67E]/5 to-transparent"></div>
+    <div class="relative z-10">
+      <h2 class="mb-6 text-4xl font-bold tracking-[-0.03em] text-on-surface md:text-[36px]">Pronto para dar o próximo passo no seu cultivo?</h2>
+      <p class="mx-auto mb-10 max-w-xl text-lg text-[#5c6360]">Junte-se a milhares de cultivadores que já utilizam o Stove para otimizar suas colheitas.</p>
+      <div class="flex flex-col justify-center gap-4 md:flex-row">
+        <a class="rounded-full bg-[#00A67E] px-10 py-5 text-lg font-bold text-white shadow-lg shadow-[#00A67E]/20 transition-transform hover:scale-105 active:scale-95" href="/app/">Começar Teste Grátis</a>
+        <a class="rounded-full border border-outline-variant bg-white px-10 py-5 text-lg font-bold text-on-surface transition-colors hover:bg-surface-container-low" href="mailto:stoveproject@gmail.com">Falar com Consultor</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="flex w-full flex-col items-center justify-between gap-8 border-t border-outline-variant/30 bg-white px-6 py-12 md:flex-row md:px-20 lg:px-24">
+  <div class="flex flex-col gap-4">
+    <a class="text-lg font-extrabold text-[#00A67E]" href="#top">Stove</a>
+    <p class="max-w-xs text-sm text-[#5c6360]">Monitoramento inteligente para a próxima geração da agricultura sustentável.</p>
+  </div>
+
+  <div class="flex flex-wrap justify-center gap-8 text-sm font-bold text-on-surface-variant">
+    <a class="transition-colors hover:text-[#00A67E]" href="#beneficios">Privacidade</a>
+    <a class="transition-colors hover:text-[#00A67E]" href="#como-funciona">Termos de Uso</a>
+    <a class="transition-colors hover:text-[#00A67E]" href="mailto:stoveproject@gmail.com">Contato</a>
+    <a class="transition-colors hover:text-[#00A67E]" href="https://github.com/GabrielMeirinhos/project_stove" target="_blank" rel="noreferrer">Suporte</a>
+  </div>
+
+  <div class="text-center text-sm text-[#5c6360] md:text-right">
+    © 2024 Stove Intelligent Monitoring. Todos os direitos reservados.
+  </div>
 </footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('opacity-100', 'translate-y-0');
+        entry.target.classList.remove('opacity-0', 'translate-y-10');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('section').forEach((section) => {
+    section.classList.add('transition-all', 'duration-1000', 'opacity-0', 'translate-y-10');
+    observer.observe(section);
+  });
+</script>
 </body>
 </html>
