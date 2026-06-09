@@ -17,6 +17,7 @@ ENV NODE_ENV=production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/stove_landing_final.html ./
+COPY --from=builder /app/landing ./landing
 COPY server.ts tsconfig.json ./
 EXPOSE 3000
 CMD ["node_modules/.bin/tsx", "server.ts"]

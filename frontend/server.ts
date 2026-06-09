@@ -183,6 +183,7 @@ async function startServer() {
   });
 
   app.use(express.json());
+  app.use("/landing", express.static(path.join(process.cwd(), "landing")));
 
   app.post("/api/auth/login", async (req, res) => {
     const { email, password } = req.body as { email?: string; password?: string };
