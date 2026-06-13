@@ -13,8 +13,10 @@ import Charts from './components/dashboard/Charts';
 import Sidebar from './components/layout/Sidebar';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { Menu } from 'lucide-react';
-import { api, AuthUser, AdminOverview } from './services/api';
-import { HistoryData, LiveSensorEvent, MqttStatus, SensorData } from './types';
+import { api, AuthUser, AdminOverview, RealtimeSubscription } from './services/api';
+import { HistoryData, MqttStatus, PlantStatusPayload, SensorData } from './types';
+import { toast } from 'sonner';
+import { mapPlantStatusToSensor } from './services/api';
 
 type ThemeMode = 'light' | 'dark';
 type AppLanguage = 'pt-BR' | 'en-US';
@@ -132,6 +134,8 @@ export default function App() {
   });
   const [sensorData, setSensorData] = useState<SensorData | null>(null);
   const [mqttStatus, setMqttStatus] = useState<MqttStatus | null>(null);
+  const [plantStatus, setPlantStatus] = useState<PlantStatusPayload | null>(null);
+  const [plantAlert, setPlantAlert] = useState<string | null>(null);
   const [historyData, setHistoryData] = useState<HistoryData[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [adminUsers, setAdminUsers] = useState<AuthUser[]>([]);
@@ -141,6 +145,7 @@ export default function App() {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem('gaia-demo-mode') === 'on';
   });
+  const isEnglish = language === 'en-US';
 
   useEffect(() => {
     try {
@@ -204,12 +209,6 @@ export default function App() {
       };
     }
 
-    const eventSource = api.subscribeSensorStream((event: LiveSensorEvent) => {
-      if (!isMounted) return;
-      setSensorData(event.sensor);
-      setMqttStatus(event.status);
-    });
-
     const hydrateInitialState = async () => {
       try {
         const [initialSensors, initialStatus] = await Promise.all([
@@ -229,13 +228,57 @@ export default function App() {
       }
     };
 
+    const realtimeConnectionInfo = api.getRealtimeConnectionInfo();
+
+    let statusSocket: RealtimeSubscription | null = null;
+    let alertSocket: RealtimeSubscription | null = null;
+    let fallbackEventSource: EventSource | null = null;
+
+    const activateFallbackStream = () => {
+      if (!isMounted || fallbackEventSource) {
+        return;
+      }
+
+      fallbackEventSource = api.subscribeSensorStream((event) => {
+        if (!isMounted) return;
+        setSensorData(event.sensor);
+        setMqttStatus(event.status);
+      });
+    };
+
+    statusSocket = api.subscribePlantStatus((payload) => {
+      if (!isMounted) return;
+      setPlantStatus(payload);
+      setSensorData(mapPlantStatusToSensor(payload));
+      setMqttStatus((current) => current ? { ...current, connected: true, lastMessageAt: new Date().toISOString(), subscribedTopic: 'planta/status' } : {
+        connected: true,
+        brokerUrl: realtimeConnectionInfo.brokerUrl,
+        subscribedTopic: 'planta/status',
+        lastMessageAt: new Date().toISOString(),
+      });
+    });
+
+    statusSocket.onerror = () => {
+      activateFallbackStream();
+    };
+
+    alertSocket = api.subscribePlantAlert((message) => {
+      if (!isMounted) return;
+      setPlantAlert(message);
+      toast.error(message, {
+        description: isEnglish ? 'Critical plant alert received in real time.' : 'Alerta crítico da planta recebido em tempo real.',
+      });
+    });
+
     void hydrateInitialState();
 
     return () => {
       isMounted = false;
-      eventSource.close();
+      statusSocket?.close();
+      alertSocket?.close();
+      fallbackEventSource?.close();
     };
-  }, [demoMode, isAuthenticated]);
+  }, [demoMode, isAuthenticated, isEnglish]);
 
   useEffect(() => {
     let isMounted = true;
@@ -425,8 +468,6 @@ export default function App() {
     };
   }, [authToken, currentUser?.role, isAuthenticated]);
 
-  const isEnglish = language === 'en-US';
-
   const getViewLabel = (view: string) => {
     if (view === 'Dashboard') return isEnglish ? 'Dashboard' : 'Painel';
     if (view === 'My Plant') return isEnglish ? 'My Plant' : 'Minha Planta';
@@ -459,6 +500,7 @@ export default function App() {
   };
 
   const plantStage = getPlantStage(day);
+  const isPumpOn = plantStatus?.bomba === 'ligada';
   const notifications: HeaderNotification[] = [
     {
       id: 'mqtt-status',
@@ -628,6 +670,42 @@ export default function App() {
                 <h2 className="text-5xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{isEnglish ? 'Gaia Plant' : 'Planta Gaia'}</h2>
                 <p className="text-slate-500 dark:text-slate-300 font-medium text-lg">{isEnglish ? 'Detailed monitoring of plant evolution across each growth phase.' : 'Acompanhamento detalhado da evolucao da planta em cada fase de crescimento.'}</p>
               </div>
+
+              {plantAlert && (
+                <div className="glass rounded-[28px] border border-amber-200 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 px-5 py-4 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest font-black text-amber-700 dark:text-amber-300">{isEnglish ? 'Critical alert' : 'Alerta crítico'}</p>
+                    <p className="text-sm font-semibold text-amber-900 dark:text-amber-100 mt-1">{plantAlert}</p>
+                  </div>
+                  <button
+                    onClick={() => setPlantAlert(null)}
+                    className="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-300"
+                  >
+                    {isEnglish ? 'Dismiss' : 'Fechar'}
+                  </button>
+                </div>
+              )}
+
+              {plantStatus && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-4">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{isEnglish ? 'Soil moisture' : 'Umidade do solo'}</p>
+                    <p className="text-xl font-black text-slate-800 dark:text-slate-100 mt-2">{Math.round(plantStatus.solo_umi)}%</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-4">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{isEnglish ? 'Irrigation' : 'Irrigação'}</p>
+                    <p className={`text-xl font-black mt-2 ${isPumpOn ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-100'}`}>
+                      {isPumpOn ? (isEnglish ? 'On' : 'Ligada') : (isEnglish ? 'Off' : 'Desligada')}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-100 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 p-4">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400">{isEnglish ? 'Stability' : 'Estabilidade'}</p>
+                    <p className={`text-xl font-black mt-2 ${plantStatus.estabilizado ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-300'}`}>
+                      {plantStatus.estabilizado ? (isEnglish ? 'Stable' : 'Estável') : (isEnglish ? 'Adjusting' : 'Ajustando')}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="flex-1 min-h-[500px] relative flex items-center justify-center bg-white/20 dark:bg-slate-900/60 rounded-[60px] border border-white/40 dark:border-slate-700/40 shadow-sm">
                 <div className="absolute inset-0 bg-gradient-to-b from-green-500/5 dark:from-green-400/10 to-transparent rounded-[60px] pointer-events-none" />

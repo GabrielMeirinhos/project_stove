@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Camera, PauseCircle, PlayCircle, Trash2, Loader2, Microscope, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../services/api';
@@ -38,56 +38,44 @@ function ConfidenceBar({ value, isHealthy }: { value: number; isHealthy: boolean
   );
 }
 
+const MJPEG_STREAM_URL = import.meta.env.VITE_ESP32_CAM_STREAM_URL ?? '';
+
 export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
   const isEnglish = language === 'en-US';
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const [frames, setFrames] = useState<CapturedFrame[]>([]);
-  const [cameraError, setCameraError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isLiveOpen, setIsLiveOpen] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
 
   const selectedFrame = frames.find((f) => f.id === selectedId) ?? frames[0] ?? null;
-
-  const stopCamera = () => {
-    stream?.getTracks().forEach((t) => t.stop());
-    setStream(null);
-    if (videoRef.current) videoRef.current.srcObject = null;
-  };
-
-  const startCamera = async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: 1280, height: 720 },
-      });
-      setCameraError(null);
-      setStream(mediaStream);
-      if (videoRef.current) videoRef.current.srcObject = mediaStream;
-      toast.success(isEnglish ? 'Camera connected' : 'Camera conectada', {
-        description: isEnglish ? 'Live plant view started.' : 'Visualização ao vivo iniciada.',
-      });
-    } catch {
-      setCameraError(isEnglish ? 'Could not access the camera.' : 'Não foi possível acessar a câmera.');
-      toast.error(isEnglish ? 'Camera error' : 'Erro na câmera', {
-        description: isEnglish ? 'Check browser camera permission.' : 'Verifique a permissão de câmera no navegador.',
-      });
-    }
-  };
+  const hasStream = Boolean(MJPEG_STREAM_URL);
 
   const captureAndAnalyze = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    const video = videoRef.current;
+    if (!imageRef.current || !canvasRef.current) return;
+    const image = imageRef.current;
     const canvas = canvasRef.current;
-    if (!video.videoWidth) return;
+    if (!image.complete || !image.naturalWidth) {
+      toast.error(isEnglish ? 'Stream not ready' : 'Stream indisponível', {
+        description: isEnglish ? 'Wait for the MJPEG feed to load.' : 'Aguarde o carregamento do feed MJPEG.',
+      });
+      return;
+    }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageB64 = canvas.toDataURL('image/jpeg', 0.86);
+    try {
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    } catch {
+      toast.error(isEnglish ? 'Unable to read stream frame' : 'Não foi possível ler o frame do stream');
+      return;
+    }
 
+    const imageB64 = canvas.toDataURL('image/jpeg', 0.86);
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const newFrame: CapturedFrame = { id, image: imageB64, status: 'analyzing' };
 
@@ -98,11 +86,10 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
 
     try {
       const analysis = await api.analyzeImage(imageB64);
-      setFrames((prev) =>
-        prev.map((f) => (f.id === id ? { ...f, status: 'done', analysis } : f))
-      );
+      setFrames((prev) => prev.map((f) => (f.id === id ? { ...f, status: 'done', analysis } : f)));
       const { condition, isHealthy } = parseClassName(analysis.top_prediction.class);
       const pct = Math.round(analysis.top_prediction.confidence * 100);
+
       if (analysis.mock) {
         toast.warning(isEnglish ? 'Model not trained yet' : 'Modelo ainda não treinado', {
           description: isEnglish ? 'Train the model to get real predictions.' : 'Treine o modelo para obter predições reais.',
@@ -112,20 +99,15 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
           description: `${pct}% ${isEnglish ? 'confidence' : 'de confiança'} · ${analysis.inference_ms}ms`,
         });
       }
+
     } catch {
       setFrames((prev) => prev.map((f) => (f.id === id ? { ...f, status: 'error' } : f)));
       toast.error(isEnglish ? 'Analysis failed' : 'Falha na análise');
     }
   };
 
-  useEffect(() => {
-    void startCamera();
-    return () => { stopCamera(); };
-  }, []);
-
   return (
     <div className="flex flex-col gap-6 h-full">
-      {/* Header */}
       <div className="glass rounded-[28px] p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100">
@@ -133,41 +115,60 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
           </h2>
           <p className="text-slate-500 dark:text-slate-300 text-sm mt-1">
             {isEnglish
-              ? 'Live view to monitor the plant framing in real time.'
-              : 'Visualização ao vivo para acompanhar o enquadramento da planta em tempo real.'}
+              ? 'Live MJPEG stream from the ESP32-CAM with optional image capture.'
+              : 'Stream MJPEG ao vivo da ESP32-CAM com captura opcional de imagem.'}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/70 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300">
-            {stream ? (isEnglish ? 'Camera on' : 'Camera ativa') : (isEnglish ? 'Camera off' : 'Camera inativa')}
+            {isLiveOpen && hasStream ? (isEnglish ? 'Live on' : 'Ao vivo') : (isEnglish ? 'Live off' : 'Offline')}
           </span>
-          {stream ? (
-            <button
-              onClick={stopCamera}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-200 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all"
-            >
-              <PauseCircle size={18} />
-              {isEnglish ? 'Pause' : 'Pausar'}
-            </button>
-          ) : (
-            <button
-              onClick={startCamera}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-green-200 dark:border-green-500/40 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-500/20 transition-all"
-            >
-              <PlayCircle size={18} />
-              {isEnglish ? 'Start' : 'Iniciar'}
-            </button>
-          )}
+          <button
+            onClick={() => {
+              if (!hasStream) {
+                setStreamError(isEnglish ? 'Define VITE_ESP32_CAM_STREAM_URL to enable the stream.' : 'Defina VITE_ESP32_CAM_STREAM_URL para habilitar o stream.');
+                toast.error(isEnglish ? 'Missing stream URL' : 'URL do stream ausente');
+                return;
+              }
+
+              setStreamError(null);
+              setIsLiveOpen((current) => !current);
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all ${
+              isLiveOpen
+                ? 'border-red-200 dark:border-red-500/40 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/20'
+                : 'border-green-200 dark:border-green-500/40 bg-green-50 dark:bg-green-500/10 text-green-600 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-500/20'
+            }`}
+          >
+            {isLiveOpen ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
+            {isLiveOpen ? (isEnglish ? 'Pause live' : 'Pausar live') : (isEnglish ? 'Open live' : 'Abrir live')}
+          </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
-        {/* Video feed */}
         <div className="lg:col-span-8 flex flex-col gap-4">
           <div className="relative aspect-video glass rounded-[28px] overflow-hidden border border-slate-200 dark:border-slate-700/50 bg-slate-950">
-            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+            {isLiveOpen && hasStream ? (
+              <img
+                ref={imageRef}
+                src={MJPEG_STREAM_URL}
+                alt={isEnglish ? 'ESP32-CAM live stream' : 'Stream ao vivo da ESP32-CAM'}
+                crossOrigin="anonymous"
+                className="w-full h-full object-cover"
+                onLoad={() => setStreamError(null)}
+                onError={() => setStreamError(isEnglish ? 'Could not load the live stream.' : 'Não foi possível carregar o stream.')}
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 gap-3 bg-slate-900/80 px-6 text-center">
+                <Camera size={44} strokeWidth={1.5} />
+                <p className="text-sm font-medium">
+                  {streamError ?? (isEnglish ? 'Open the live stream to view the camera.' : 'Abra o live stream para ver a câmera.')}
+                </p>
+              </div>
+            )}
 
-            {stream && (
+            {isLiveOpen && hasStream && (
               <>
                 <div className="absolute inset-0 pointer-events-none border border-green-500/30" />
                 <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(to_right,transparent_32%,rgba(34,197,94,0.12)_50%,transparent_68%)]" />
@@ -176,23 +177,14 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
                 </div>
                 <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-black/45 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
                   <Microscope size={12} />
-                  AI
+                  MJPEG
                 </div>
               </>
             )}
 
-            {!stream && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 gap-3 bg-slate-900/80 px-6 text-center">
-                <Camera size={44} strokeWidth={1.5} />
-                <p className="text-sm font-medium">
-                  {cameraError ?? (isEnglish ? 'Waiting for camera...' : 'Aguardando câmera...')}
-                </p>
-              </div>
-            )}
             <canvas ref={canvasRef} className="hidden" />
           </div>
 
-          {/* Capture bar */}
           <div className="glass rounded-[24px] p-4 flex items-center justify-between gap-3">
             <div className="text-slate-600 dark:text-slate-300 text-sm font-semibold">
               {isEnglish ? `${frames.length} capture${frames.length !== 1 ? 's' : ''}` : `${frames.length} captura${frames.length !== 1 ? 's' : ''}`}
@@ -205,14 +197,17 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
             <div className="flex items-center gap-2">
               <button
                 onClick={captureAndAnalyze}
-                disabled={!stream}
+                disabled={!isLiveOpen || !hasStream}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-sm font-bold disabled:opacity-45 disabled:cursor-not-allowed transition-all"
               >
                 <Microscope size={16} />
                 {isEnglish ? 'Capture & Analyze' : 'Capturar e Analisar'}
               </button>
               <button
-                onClick={() => { setFrames([]); setSelectedId(null); }}
+                onClick={() => {
+                  setFrames([]);
+                  setSelectedId(null);
+                }}
                 className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:text-red-500 hover:border-red-300 dark:hover:border-red-500/40 transition-colors"
                 title={isEnglish ? 'Clear all' : 'Limpar tudo'}
               >
@@ -222,9 +217,7 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
           </div>
         </div>
 
-        {/* Right panel: gallery + result */}
         <div className="lg:col-span-4 flex flex-col gap-4">
-          {/* Gallery */}
           <div className="glass rounded-[24px] p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">
@@ -284,7 +277,6 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
             </div>
           </div>
 
-          {/* Analysis result */}
           <div className="glass rounded-[24px] p-4 flex-1 flex flex-col gap-3">
             <h3 className="text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">
               {isEnglish ? 'AI Result' : 'Resultado IA'}
@@ -329,7 +321,6 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
                     </div>
                   )}
 
-                  {/* Main result */}
                   <div className={`rounded-2xl border px-4 py-3 flex items-center gap-3 ${
                     isHealthy
                       ? 'border-emerald-200 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10'
@@ -351,7 +342,6 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
                     </div>
                   </div>
 
-                  {/* Confidence */}
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-1.5">
                       {isEnglish ? 'Confidence' : 'Confiança'}
@@ -359,7 +349,6 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
                     <ConfidenceBar value={analysis.top_prediction.confidence} isHealthy={isHealthy} />
                   </div>
 
-                  {/* Top-k */}
                   {analysis.top_k.length > 1 && (
                     <div>
                       <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 dark:text-slate-400 mb-1.5">
@@ -383,7 +372,6 @@ export const ScanView: React.FC<ScanViewProps> = ({ language = 'pt-BR' }) => {
                     </div>
                   )}
 
-                  {/* Inference time */}
                   {!isMock && (
                     <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 text-right">
                       {isEnglish ? `inference: ${analysis.inference_ms}ms` : `inferência: ${analysis.inference_ms}ms`}

@@ -45,3 +45,15 @@ export interface PlantAnalysis {
   inference_ms: number;
   mock: boolean;
 }
+
+export interface PlantStatusPayload {
+  planta: string;
+  solo_umi: number;
+  ar_umi: number;
+  ar_temp: number;
+  luz_pct: number;
+  luz_bruta: number;
+  bomba: 'ligada' | 'desligada' | string;
+  estabilizado: boolean;
+  ts: number;
+}

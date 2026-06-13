@@ -1,7 +1,21 @@
-import { SensorData, HistoryData, LiveSensorEvent, MqttStatus, PlantAnalysis } from '../types';
+import * as mqtt from 'mqtt';
+import { SensorData, HistoryData, LiveSensorEvent, MqttStatus, PlantAnalysis, PlantStatusPayload } from '../types';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? '/api/v1';
 const AUTH_BASE_URL = import.meta.env.VITE_AUTH_API_URL ?? '/api';
+const PLANT_WS_BASE_URL = import.meta.env.VITE_PLANT_WS_URL ?? import.meta.env.VITE_BACKEND_WS_URL ?? '';
+const MQTT_WS_URL = import.meta.env.VITE_MQTT_WS_URL ?? import.meta.env.VITE_MQTT_URL ?? '';
+const MQTT_USERNAME = import.meta.env.VITE_MQTT_USER ?? '';
+const MQTT_PASSWORD = import.meta.env.VITE_MQTT_PASSWORD ?? '';
+const MQTT_CLIENT_ID = import.meta.env.VITE_MQTT_CLIENT_ID ?? 'gaia-frontend';
+const MQTT_TOPIC_PREFIX = import.meta.env.VITE_MQTT_TOPIC_PREFIX ?? 'planta';
+const PLANT_STATUS_TOPIC = `${MQTT_TOPIC_PREFIX}/status`;
+const PLANT_ALERT_TOPIC = `${MQTT_TOPIC_PREFIX}/alerta`;
+
+export interface RealtimeSubscription {
+  close(): void;
+  onerror?: (error?: unknown) => void;
+}
 
 export type AuthRole = 'admin' | 'user';
 
@@ -46,6 +60,136 @@ const formatDayLabel = (date: Date) =>
   date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
 const clampToPercentage = (value: number) => Math.min(100, Math.max(0, value));
+
+const getDefaultWebSocketBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}`;
+};
+
+const buildWebSocketUrl = (topic: string) => {
+  const baseUrl = PLANT_WS_BASE_URL || getDefaultWebSocketBaseUrl();
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const normalizedTopic = topic.startsWith('/') ? topic.slice(1) : topic;
+  return `${normalizedBase}/${normalizedTopic}`;
+};
+
+const parseRealtimePayload = (data: MessageEvent['data']) => {
+  if (typeof data !== 'string') {
+    return data;
+  }
+
+  try {
+    return JSON.parse(data);
+  } catch {
+    return data;
+  }
+};
+
+const getMqttBrokerUrl = () => MQTT_WS_URL;
+
+const isBridgeTransportConfigured = () => Boolean(PLANT_WS_BASE_URL);
+
+const isMqttTransportConfigured = () => Boolean(getMqttBrokerUrl());
+
+const parseAlertMessage = (payload: unknown) => {
+  if (typeof payload === 'string') {
+    return payload;
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return null;
+  }
+
+  const record = payload as { message?: unknown; alerta?: unknown; text?: unknown; detail?: unknown };
+  const message = record.message ?? record.alerta ?? record.text ?? record.detail;
+  return typeof message === 'string' ? message : null;
+};
+
+const createWebSocketSubscription = (
+  topic: string,
+  onMessage: (payload: unknown) => void,
+): RealtimeSubscription => {
+  const source = new WebSocket(buildWebSocketUrl(topic));
+  const subscription: RealtimeSubscription = {
+    close: () => source.close(),
+  };
+
+  source.onmessage = (event) => {
+    const payload = parseRealtimePayload(event.data);
+    onMessage(payload);
+  };
+
+  source.onerror = (event) => {
+    subscription.onerror?.(event);
+  };
+
+  return subscription;
+};
+
+const createMqttSubscription = (
+  topic: string,
+  onMessage: (payload: unknown) => void,
+): RealtimeSubscription => {
+  const brokerUrl = getMqttBrokerUrl();
+  const client = mqtt.connect(brokerUrl, {
+    clientId: MQTT_CLIENT_ID,
+    username: MQTT_USERNAME || undefined,
+    password: MQTT_PASSWORD || undefined,
+    reconnectPeriod: 5000,
+    connectTimeout: 10000,
+  });
+
+  const subscription: RealtimeSubscription = {
+    close: () => client.end(true),
+  };
+
+  client.on('connect', () => {
+    client.subscribe(topic, { qos: 1 }, (error) => {
+      if (error) {
+        subscription.onerror?.(error);
+      }
+    });
+  });
+
+  client.on('message', (receivedTopic, payload) => {
+    if (receivedTopic !== topic) {
+      return;
+    }
+
+    onMessage(parseRealtimePayload(payload.toString('utf8')));
+  });
+
+  client.on('error', (error) => {
+    subscription.onerror?.(error);
+  });
+
+  return subscription;
+};
+
+const getRealtimeBrokerUrl = () => getMqttBrokerUrl() || (PLANT_WS_BASE_URL || getDefaultWebSocketBaseUrl());
+
+export const mapPlantStatusToSensor = (payload: PlantStatusPayload): SensorData => {
+  const lightValue = payload.luz_bruta > 0 ? payload.luz_bruta : payload.luz_pct;
+  const estimatedHealth = payload.estabilizado
+    ? 96
+    : Math.min(100, Math.max(45, Math.round((payload.solo_umi * 0.45) + ((100 - Math.abs(payload.ar_temp - 24)) * 2.5) + (payload.luz_pct * 0.2))));
+  const timestamp = payload.ts > 1_000_000_000_000 ? new Date(payload.ts).toISOString() : new Date().toISOString();
+
+  return {
+    moisture: payload.solo_umi,
+    temperature: payload.ar_temp,
+    luminosity: lightValue,
+    health: estimatedHealth,
+    timestamp,
+    source: 'mqtt',
+    topic: 'planta/status',
+    connected: true,
+  };
+};
 
 const normalizeReadingValue = (value: number | null | undefined) => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -196,6 +340,48 @@ export const api = {
     });
     if (!res.ok) throw new Error('Falha na análise de imagem');
     return res.json();
+  },
+
+  getRealtimeConnectionInfo() {
+    return {
+      brokerUrl: getRealtimeBrokerUrl(),
+      statusTopic: PLANT_STATUS_TOPIC,
+      alertTopic: PLANT_ALERT_TOPIC,
+    };
+  },
+
+  subscribePlantStatus(onMessage: (payload: PlantStatusPayload) => void) {
+    if (isMqttTransportConfigured() && !isBridgeTransportConfigured()) {
+      return createMqttSubscription(PLANT_STATUS_TOPIC, (payload) => {
+        if (payload && typeof payload === 'object') {
+          onMessage(payload as PlantStatusPayload);
+        }
+      });
+    }
+
+    return createWebSocketSubscription('planta/status', (payload) => {
+      if (payload && typeof payload === 'object') {
+        onMessage(payload as PlantStatusPayload);
+      }
+    });
+  },
+
+  subscribePlantAlert(onMessage: (message: string) => void) {
+    if (isMqttTransportConfigured() && !isBridgeTransportConfigured()) {
+      return createMqttSubscription(PLANT_ALERT_TOPIC, (payload) => {
+        const message = parseAlertMessage(payload);
+        if (message) {
+          onMessage(message);
+        }
+      });
+    }
+
+    return createWebSocketSubscription('planta/alerta', (payload) => {
+      const message = parseAlertMessage(payload);
+      if (message) {
+        onMessage(message);
+      }
+    });
   },
 
   subscribeSensorStream(onMessage: (event: LiveSensorEvent) => void) {
