@@ -35,6 +35,12 @@ system_event_repo: PostgresRepository[Dict[str, Any]] = PostgresRepository(
     "system_event"
 )
 alert_repo: PostgresRepository[Dict[str, Any]] = PostgresRepository("alert")
+planta_estufa_repo: PostgresRepository[Dict[str, Any]] = PostgresRepository(
+    "planta_estufa"
+)
+planta_alerta_repo: PostgresRepository[Dict[str, Any]] = PostgresRepository(
+    "planta_alerta"
+)
 
 
 def reset_database() -> None:
@@ -46,12 +52,14 @@ def reset_database() -> None:
 
     statements = (
         "DELETE FROM alert",
+        "DELETE FROM planta_alerta",
         "DELETE FROM system_event",
         "DELETE FROM vision_analysis",
         "UPDATE plant_image SET analysis_id = NULL",
         "DELETE FROM plant_image",
         "DELETE FROM irrigation_event",
         "DELETE FROM sensor_reading",
+        "DELETE FROM planta_estufa",
         "DELETE FROM device",
         "DELETE FROM plant",
     )

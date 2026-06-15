@@ -35,6 +35,12 @@ class PlantBase(BaseModel):
     optimal_soil_moisture_max: float = Field(
         ..., ge=0, le=100, description="Umidade máxima do solo ideal (%)"
     )
+    optimal_light_min: Optional[float] = Field(
+        None, ge=0, description="Luminosidade mínima ideal (lux)"
+    )
+    optimal_light_max: Optional[float] = Field(
+        None, ge=0, description="Luminosidade máxima ideal (lux)"
+    )
     watering_interval_hours: int = Field(
         ..., gt=0, description="Intervalo recomendado entre irrigações (horas)"
     )
@@ -50,6 +56,14 @@ class PlantBase(BaseModel):
         if self.optimal_soil_moisture_min > self.optimal_soil_moisture_max:
             raise ValueError(
                 "optimal_soil_moisture_min não pode ser maior que optimal_soil_moisture_max"
+            )
+        if (
+            self.optimal_light_min is not None
+            and self.optimal_light_max is not None
+            and self.optimal_light_min > self.optimal_light_max
+        ):
+            raise ValueError(
+                "optimal_light_min não pode ser maior que optimal_light_max"
             )
         return self
 
@@ -70,6 +84,8 @@ class PlantUpdate(BaseModel):
     optimal_humidity_max: Optional[float] = Field(None, ge=0, le=100)
     optimal_soil_moisture_min: Optional[float] = Field(None, ge=0, le=100)
     optimal_soil_moisture_max: Optional[float] = Field(None, ge=0, le=100)
+    optimal_light_min: Optional[float] = Field(None, ge=0)
+    optimal_light_max: Optional[float] = Field(None, ge=0)
     watering_interval_hours: Optional[int] = Field(None, gt=0)
 
 

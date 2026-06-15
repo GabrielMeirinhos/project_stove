@@ -73,6 +73,73 @@ def ensure_users_table() -> None:
         cur.execute("""
             ALTER TABLE plant ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES users(id);
         """)
+        # Migração: cria planta_estufa se schema antigo já tinha sido aplicado
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS planta_estufa (
+                id uuid PRIMARY KEY,
+                plant_id uuid NOT NULL REFERENCES plant(id),
+                life_days integer,
+                dia_inclusao timestamptz NOT NULL,
+                dia_saida timestamptz,
+                dia_nascenca timestamptz
+            );
+        """)
+        # Migração: adiciona colunas de luz na plant (catálogo)
+        cur.execute("""
+            ALTER TABLE plant ADD COLUMN IF NOT EXISTS optimal_light_min numeric;
+        """)
+        cur.execute("""
+            ALTER TABLE plant ADD COLUMN IF NOT EXISTS optimal_light_max numeric;
+        """)
+        # Migração: renomeia vida_dias -> life_days se a coluna antiga existir
+        cur.execute("""
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'planta_estufa' AND column_name = 'vida_dias'
+                ) AND NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'planta_estufa' AND column_name = 'life_days'
+                ) THEN
+                    ALTER TABLE planta_estufa RENAME COLUMN vida_dias TO life_days;
+                END IF;
+            END $$;
+        """)
+        # Migração: garante life_days em planta_estufa
+        cur.execute("""
+            ALTER TABLE planta_estufa ADD COLUMN IF NOT EXISTS life_days integer;
+        """)
+        # Migração: torna sensor_reading.device_id nullable (planta/status não traz device)
+        cur.execute("""
+            ALTER TABLE sensor_reading ALTER COLUMN device_id DROP NOT NULL;
+        """)
+        # Migração: campos vindos do planta/status (luz_pct, bomba, estabilizado, ts)
+        cur.execute("""
+            ALTER TABLE sensor_reading ADD COLUMN IF NOT EXISTS light_percent numeric;
+        """)
+        cur.execute("""
+            ALTER TABLE sensor_reading ADD COLUMN IF NOT EXISTS pump_state varchar(20);
+        """)
+        cur.execute("""
+            ALTER TABLE sensor_reading ADD COLUMN IF NOT EXISTS stabilized boolean;
+        """)
+        cur.execute("""
+            ALTER TABLE sensor_reading ADD COLUMN IF NOT EXISTS firmware_ts bigint;
+        """)
+        # Migração: cria planta_alerta se schema antigo não tinha
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS planta_alerta (
+                id uuid PRIMARY KEY,
+                planta varchar(100) NOT NULL,
+                tipo varchar(30) NOT NULL,
+                nivel varchar(20) NOT NULL,
+                mensagem text NOT NULL,
+                valor numeric,
+                minimo numeric,
+                recebido_em timestamptz NOT NULL
+            );
+        """)
 
 
 def ensure_admin_user() -> None:
