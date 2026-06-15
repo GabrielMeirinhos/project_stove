@@ -228,55 +228,40 @@ export default function App() {
       }
     };
 
-    const realtimeConnectionInfo = api.getRealtimeConnectionInfo();
+    // Stream SSE com discriminador de tipo (status vs alerta)
+    let liveStream: RealtimeSubscription | null = null;
 
-    let statusSocket: RealtimeSubscription | null = null;
-    let alertSocket: RealtimeSubscription | null = null;
-    let fallbackEventSource: EventSource | null = null;
-
-    const activateFallbackStream = () => {
-      if (!isMounted || fallbackEventSource) {
-        return;
-      }
-
-      fallbackEventSource = api.subscribeSensorStream((event) => {
-        if (!isMounted) return;
-        setSensorData(event.sensor);
-        setMqttStatus(event.status);
-      });
-    };
-
-    statusSocket = api.subscribePlantStatus((payload) => {
+    const handleStatusUpdate = (payload: PlantStatusPayload) => {
       if (!isMounted) return;
       setPlantStatus(payload);
       setSensorData(mapPlantStatusToSensor(payload));
-      setMqttStatus((current) => current ? { ...current, connected: true, lastMessageAt: new Date().toISOString(), subscribedTopic: 'planta/status' } : {
-        connected: true,
-        brokerUrl: realtimeConnectionInfo.brokerUrl,
-        subscribedTopic: 'planta/status',
-        lastMessageAt: new Date().toISOString(),
-      });
-    });
-
-    statusSocket.onerror = () => {
-      activateFallbackStream();
+      setMqttStatus((current) => 
+        current 
+          ? { ...current, connected: true, lastMessageAt: new Date().toISOString(), subscribedTopic: 'planta/status' }
+          : {
+              connected: true,
+              brokerUrl: 'mqtt://hivemq-cloud',
+              subscribedTopic: 'planta/status',
+              lastMessageAt: new Date().toISOString(),
+            }
+      );
     };
 
-    alertSocket = api.subscribePlantAlert((message) => {
+    const handleAlertUpdate = (message: string) => {
       if (!isMounted) return;
       setPlantAlert(message);
       toast.error(message, {
         description: isEnglish ? 'Critical plant alert received in real time.' : 'Alerta crítico da planta recebido em tempo real.',
       });
-    });
+    };
+
+    liveStream = api.subscribeLiveStream(handleStatusUpdate, handleAlertUpdate);
 
     void hydrateInitialState();
 
     return () => {
       isMounted = false;
-      statusSocket?.close();
-      alertSocket?.close();
-      fallbackEventSource?.close();
+      liveStream?.close();
     };
   }, [demoMode, isAuthenticated, isEnglish]);
 

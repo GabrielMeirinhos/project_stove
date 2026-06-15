@@ -1,5 +1,4 @@
-import * as mqtt from 'mqtt';
-import { SensorData, HistoryData, LiveSensorEvent, MqttStatus, PlantAnalysis, PlantStatusPayload } from '../types';
+import { SensorData, HistoryData, MqttStatus, PlantAnalysis, PlantStatusPayload } from '../types';
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? '/api/v1';
 const AUTH_BASE_URL = import.meta.env.VITE_AUTH_API_URL ?? '/api';
@@ -11,10 +10,15 @@ const MQTT_CLIENT_ID = import.meta.env.VITE_MQTT_CLIENT_ID ?? 'gaia-frontend';
 const MQTT_TOPIC_PREFIX = import.meta.env.VITE_MQTT_TOPIC_PREFIX ?? 'planta';
 const PLANT_STATUS_TOPIC = `${MQTT_TOPIC_PREFIX}/status`;
 const PLANT_ALERT_TOPIC = `${MQTT_TOPIC_PREFIX}/alerta`;
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL ?? '/api/v1';
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_API_URL ?? '/api';
 
 export interface RealtimeSubscription {
   close(): void;
   onerror?: (error?: unknown) => void;
+}
+export interface RealtimeSubscription {
+  close(): void;
 }
 
 export type AuthRole = 'admin' | 'user';
@@ -53,47 +57,24 @@ type BackendSensorReading = {
   status?: 'normal' | 'warning' | 'critical';
   recorded_at: string;
 };
-
-const roundValue = (value: number) => Math.round(value);
-
-const formatDayLabel = (date: Date) =>
-  date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-
-const clampToPercentage = (value: number) => Math.min(100, Math.max(0, value));
-
-const getDefaultWebSocketBaseUrl = () => {
-  if (typeof window === 'undefined') {
-    return '';
-  }
-
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}`;
+type BackendSensorReading = {
+  soil_moisture_percent?: number | null;
+  humidity_percent?: number | null;
+  temperature_celsius?: number | null;
+  light_lux?: number | null;
+  status?: 'normal' | 'warning' | 'critical';
+  recorded_at: string;
 };
 
-const buildWebSocketUrl = (topic: string) => {
-  const baseUrl = PLANT_WS_BASE_URL || getDefaultWebSocketBaseUrl();
-  const normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-  const normalizedTopic = topic.startsWith('/') ? topic.slice(1) : topic;
-  return `${normalizedBase}/${normalizedTopic}`;
-};
+interface LiveStreamMessage {
+  eventType?: 'status' | 'alert';
+  topic?: string;
+  data?: unknown;
+  sensor?: SensorData | null;
+  status?: MqttStatus;
+  message?: string;
+}
 
-const parseRealtimePayload = (data: MessageEvent['data']) => {
-  if (typeof data !== 'string') {
-    return data;
-  }
-
-  try {
-    return JSON.parse(data);
-  } catch {
-    return data;
-  }
-};
-
-const getMqttBrokerUrl = () => MQTT_WS_URL;
-
-const isBridgeTransportConfigured = () => Boolean(PLANT_WS_BASE_URL);
-
-const isMqttTransportConfigured = () => Boolean(getMqttBrokerUrl());
 
 const parseAlertMessage = (payload: unknown) => {
   if (typeof payload === 'string') {
@@ -109,69 +90,12 @@ const parseAlertMessage = (payload: unknown) => {
   return typeof message === 'string' ? message : null;
 };
 
-const createWebSocketSubscription = (
-  topic: string,
-  onMessage: (payload: unknown) => void,
-): RealtimeSubscription => {
-  const source = new WebSocket(buildWebSocketUrl(topic));
-  const subscription: RealtimeSubscription = {
-    close: () => source.close(),
-  };
+const roundValue = (value: number) => Math.round(value);
 
-  source.onmessage = (event) => {
-    const payload = parseRealtimePayload(event.data);
-    onMessage(payload);
-  };
+const formatDayLabel = (date: Date) =>
+  date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-  source.onerror = (event) => {
-    subscription.onerror?.(event);
-  };
-
-  return subscription;
-};
-
-const createMqttSubscription = (
-  topic: string,
-  onMessage: (payload: unknown) => void,
-): RealtimeSubscription => {
-  const brokerUrl = getMqttBrokerUrl();
-  const client = mqtt.connect(brokerUrl, {
-    clientId: MQTT_CLIENT_ID,
-    username: MQTT_USERNAME || undefined,
-    password: MQTT_PASSWORD || undefined,
-    reconnectPeriod: 5000,
-    connectTimeout: 10000,
-  });
-
-  const subscription: RealtimeSubscription = {
-    close: () => client.end(true),
-  };
-
-  client.on('connect', () => {
-    client.subscribe(topic, { qos: 1 }, (error) => {
-      if (error) {
-        subscription.onerror?.(error);
-      }
-    });
-  });
-
-  client.on('message', (receivedTopic, payload) => {
-    if (receivedTopic !== topic) {
-      return;
-    }
-
-    onMessage(parseRealtimePayload(payload.toString('utf8')));
-  });
-
-  client.on('error', (error) => {
-    subscription.onerror?.(error);
-  });
-
-  return subscription;
-};
-
-const getRealtimeBrokerUrl = () => getMqttBrokerUrl() || (PLANT_WS_BASE_URL || getDefaultWebSocketBaseUrl());
-
+const clampToPercentage = (value: number) => Math.min(100, Math.max(0, value));
 export const mapPlantStatusToSensor = (payload: PlantStatusPayload): SensorData => {
   const lightValue = payload.luz_bruta > 0 ? payload.luz_bruta : payload.luz_pct;
   const estimatedHealth = payload.estabilizado
@@ -347,51 +271,57 @@ export const api = {
       brokerUrl: getRealtimeBrokerUrl(),
       statusTopic: PLANT_STATUS_TOPIC,
       alertTopic: PLANT_ALERT_TOPIC,
+      getRealtimeConnectionInfo() {
+        return {
+          streamUrl: '/api/live/stream',
+          statusTopic: 'planta/status',
+          alertTopic: 'planta/alerta',
+        };
+      },
     };
   },
 
-  subscribePlantStatus(onMessage: (payload: PlantStatusPayload) => void) {
-    if (isMqttTransportConfigured() && !isBridgeTransportConfigured()) {
-      return createMqttSubscription(PLANT_STATUS_TOPIC, (payload) => {
-        if (payload && typeof payload === 'object') {
-          onMessage(payload as PlantStatusPayload);
-        }
-      });
-    }
-
-    return createWebSocketSubscription('planta/status', (payload) => {
-      if (payload && typeof payload === 'object') {
-        onMessage(payload as PlantStatusPayload);
-      }
-    });
-  },
-
-  subscribePlantAlert(onMessage: (message: string) => void) {
-    if (isMqttTransportConfigured() && !isBridgeTransportConfigured()) {
-      return createMqttSubscription(PLANT_ALERT_TOPIC, (payload) => {
-        const message = parseAlertMessage(payload);
-        if (message) {
-          onMessage(message);
-        }
-      });
-    }
-
-    return createWebSocketSubscription('planta/alerta', (payload) => {
-      const message = parseAlertMessage(payload);
-      if (message) {
-        onMessage(message);
-      }
-    });
-  },
-
-  subscribeSensorStream(onMessage: (event: LiveSensorEvent) => void) {
+  /**
+   * Subscreve ao stream SSE de tempo real para status de planta e alertas.
+   * O stream discrimina mensagens por eventType/topic.
+   * Não usa WebSocket ou MQTT direto no cliente - apenas SSE.
+   */
+  subscribeLiveStream(
+    onStatus: (payload: PlantStatusPayload) => void,
+    onAlert: (message: string) => void,
+  ): RealtimeSubscription {
     const source = new EventSource('/api/live/stream');
-
+    
     source.onmessage = (event) => {
-      const payload = JSON.parse(event.data) as LiveSensorEvent;
-      onMessage(payload);
+      try {
+        const message = JSON.parse(event.data) as LiveStreamMessage;
+        
+        // Discrimina por eventType ou topic
+        if (message.eventType === 'status' || message.topic === 'planta/status') {
+          // Se vem com campo data, usa isso; senão tenta montar de sensor + status
+          if (message.data && typeof message.data === 'object') {
+            onStatus(message.data as PlantStatusPayload);
+          }
+        } else if (message.eventType === 'alert' || message.topic === 'planta/alerta') {
+          const alertMsg = typeof message.data === 'string' 
+            ? message.data 
+            : parseAlertMessage(message.data);
+          if (alertMsg) {
+            onAlert(alertMsg);
+          }
+        }
+      } catch (err) {
+        console.error('[SSE] Erro ao processar mensagem:', err);
+      }
+    };
+    
+    source.onerror = () => {
+      console.error('[SSE] Conexão encerrada');
+      source.close();
     };
 
-    return source;
-  }
+    return {
+      close: () => source.close(),
+    };
+  },
 };

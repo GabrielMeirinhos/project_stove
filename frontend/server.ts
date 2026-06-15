@@ -36,6 +36,19 @@ async function startServer() {
   };
 
   const sseClients = new Set<express.Response>();
+  let latestSensorData: SensorData | null = null;
+  let mqttStatus: MqttStatus = {
+    connected: false,
+    brokerUrl: MQTT_URL,
+    subscribedTopic: MQTT_TOPIC,
+    lastMessageAt: null,
+  };
+
+  // Estruturas para planta/status e planta/alerta (payload MQTT real)
+  let latestPlantStatus: Record<string, unknown> | null = null;
+  let latestPlantAlerts: Array<Record<string, unknown>> = [];
+
+  const sseClients = new Set<express.Response>();
 
   const broadcastLiveEvent = () => {
     const payload: LiveSensorEvent = {
@@ -45,6 +58,36 @@ async function startServer() {
 
     for (const client of sseClients) {
       client.write(`data: ${JSON.stringify(payload)}\n\n`);
+      const broadcastLiveEvent = () => {
+        const payload: LiveSensorEvent = {
+          sensor: latestSensorData,
+          status: mqttStatus,
+        };
+
+        for (const client of sseClients) {
+          client.write(`data: ${JSON.stringify(payload)}\n\n`);
+        }
+      };
+
+      /**
+       * Broadcast de mensagens discriminadas por tipo (status vs alerta).
+       * Adiciona campo `eventType` para o frontend distinguir a origem.
+       */
+      const broadcastDiscriminatedEvent = (eventType: 'status' | 'alert', topic: string, data: unknown) => {
+        const message = {
+          eventType,
+          topic,
+          data,
+        };
+
+        for (const client of sseClients) {
+          try {
+            client.write(`data: ${JSON.stringify(message)}\n\n`);
+          } catch (err) {
+            console.error('[SSE] Erro ao enviar mensagem:', err);
+          }
+        }
+      };
     }
   };
 
@@ -149,18 +192,46 @@ async function startServer() {
 
   mqttClient.on("message", (topic, payload) => {
     const message = payload.toString();
-    const parsed = parseSensorPayload(topic, message);
-
-    if (parsed) {
-      applySensorUpdate(parsed, topic);
-      return;
-    }
-
     mqttStatus = {
       ...mqttStatus,
       connected: true,
       lastMessageAt: new Date().toISOString(),
     };
+
+    // Roteamento por tópico MQTT
+    if (topic === "planta/status") {
+      // Status da planta (telemetria)
+      try {
+        latestPlantStatus = JSON.parse(message);
+        broadcastDiscriminatedEvent("status", "planta/status", latestPlantStatus);
+      } catch (err) {
+        console.error("[MQTT] Erro ao parsear planta/status:", err);
+      }
+      return;
+    }
+
+    if (topic === "planta/alerta") {
+      // Alertas da planta
+      try {
+        const parsed = JSON.parse(message);
+        if (parsed && Array.isArray(parsed.alertas)) {
+          latestPlantAlerts = parsed.alertas;
+          for (const alert of parsed.alertas) {
+            broadcastDiscriminatedEvent("alert", "planta/alerta", alert.mensagem || JSON.stringify(alert));
+          }
+        }
+      } catch (err) {
+        console.error("[MQTT] Erro ao parsear planta/alerta:", err);
+      }
+      return;
+    }
+
+    // Outros tópicos → trata como sensor/telemetria genérica
+    const parsed = parseSensorPayload(topic, message);
+    if (parsed) {
+      applySensorUpdate(parsed, topic);
+      return;
+    }
 
     broadcastLiveEvent();
   });
