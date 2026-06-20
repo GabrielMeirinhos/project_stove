@@ -102,6 +102,7 @@ Todos os endpoints estão sob `/api/v1`. A documentação interativa completa es
 | Análises de visão | `/api/v1/vision-analyses` |
 | Eventos do sistema | `/api/v1/system-events` |
 | Alertas | `/api/v1/alerts` |
+| Plantação (início de ciclo) | `/api/v1/planting` |
 
 ---
 
@@ -168,14 +169,16 @@ O arquivo `SQL/schema.sql` é executado automaticamente no startup se as tabelas
 | Tabela | Descrição |
 |--------|-----------|
 | `users` | Usuários da aplicação (com `role`) |
-| `plant` | Espécies de plantas (com `user_id`) |
+| `plant` | Espécies de plantas (com `user_id`, faixa ideal incluindo `optimal_light_min/max`) |
 | `device` | Dispositivos ESP32 vinculados a plantas |
-| `sensor_reading` | Leituras de temperatura, umidade, solo, luz |
+| `sensor_reading` | Leituras de temperatura, umidade, solo, luz (`device_id` nullable; armazena também `light_percent`, `pump_state`, `stabilized`, `firmware_ts` vindos do `planta/status`) |
 | `irrigation_event` | Acionamentos da bomba de irrigação |
 | `plant_image` | Metadados de imagens capturadas |
 | `vision_analysis` | Resultados de inferência ML |
 | `system_event` | Auditoria de eventos do sistema |
 | `alert` | Alertas gerados por leituras fora da faixa |
+| `planta_estufa` | Ciclo de plantação em curso (`plant_id`, `life_days`, `dia_inclusao`, `dia_saida`, `dia_nascenca`) |
+| `planta_alerta` | Alertas broadcast vindos do tópico `planta/alerta` (sem vínculo a `device`) |
 
 ---
 
@@ -197,3 +200,50 @@ O broker HiveMQ Cloud é conectado no startup. Tópicos utilizados:
 | `gaia/{device_id}/telemetry` | ESP32 → backend | Registra leitura de sensor |
 | `gaia/{device_id}/heartbeat` | ESP32 → backend | Atualiza `last_seen_at` |
 | `gaia/{device_id}/cmd/pump` | backend → ESP32 | Aciona bomba remotamente |
+| `planta/config` | backend → ESP32 | Publica a planta recém-plantada (faixa ideal + `vida_dias`) |
+| `planta/status` | ESP32 → backend | Telemetria broadcast do ciclo de rotina (sem `device_id`) |
+| `planta/alerta` | ESP32 → backend | Lista de alertas broadcast do ciclo de rotina |
+
+---
+
+## Ciclos de operação
+
+### Ciclo de Plantação
+
+1. **App de Visão Computacional** identifica a espécie e chama `POST /api/v1/planting/start` com `{ "plant_name", "life_days" }`.
+2. O backend localiza a planta em `plant` pelo `common_name` e cria uma linha em `planta_estufa` (`dia_inclusao = now()`).
+3. Publica em MQTT `planta/config` o payload consumido pelo ESP interno:
+
+   ```json
+   {
+     "nome": "Manjericão",
+     "vida_dias": 30,
+     "solo_min": 40.0, "solo_max": 70.0,
+     "ar_umi_min": 50.0, "ar_umi_max": 80.0,
+     "temp_min": 18.0, "temp_max": 28.0,
+     "luz_min": 300.0, "luz_max": 1200.0
+   }
+   ```
+
+### Ciclo de Rotina
+
+O ESP interno publica periodicamente:
+
+- `planta/status` — leitura completa (`ar_temp`, `ar_umi`, `solo_umi`, `luz_bruta`, `luz_pct`, `bomba`, `estabilizado`, `ts`); o backend grava em `sensor_reading` com `device_id = NULL`.
+- `planta/alerta` — `{ "planta", "alertas": [{ "tipo", "nivel", "mensagem", "valor", "minimo" }, ...] }`; cada item vira uma linha em `planta_alerta`.
+
+---
+
+## Testes
+
+### Fluxo ponta a ponta (in-process, mocka os aparelhos externos)
+
+```bash
+cd backend
+python scripts/test_full_flow.py
+```
+
+O script mocka os 3 aparelhos externos (App de Visão, ESP-CAM, ESP interno),
+exercita os ciclos de plantação e rotina contra o Postgres real definido no
+`.env`, valida cada linha persistida e o payload publicado em `planta/config`,
+e faz cleanup ao final.

@@ -42,6 +42,9 @@ def _on_connect(client: mqtt.Client, userdata, flags, rc, properties=None) -> No
         logger.info("Conectado ao broker MQTT %s:%s", MQTT_HOST, MQTT_PORT)
         client.subscribe(f"{MQTT_TOPIC_PREFIX}/+/telemetry", qos=1)
         client.subscribe(f"{MQTT_TOPIC_PREFIX}/+/heartbeat", qos=1)
+        # Tópicos broadcast do ciclo de rotina (sem device_id no path)
+        client.subscribe("planta/status", qos=1)
+        client.subscribe("planta/alerta", qos=1)
     else:
         logger.error("Falha na conexão MQTT (rc=%s)", rc)
 
@@ -66,11 +69,12 @@ def _on_message(client, userdata, msg) -> None:
     """Roteia a mensagem MQTT para o serviço correto."""
     # Import tardio: evita ciclo de dependência com app.services no boot.
     from app.schemas.sensor_reading import SensorReadingCreate
-    from app.services import device_service, sensor_reading_service
-
-    device_id = _parse_device_id(msg.topic)
-    if device_id is None:
-        return
+    from app.services import (
+        device_service,
+        planta_alerta_service,
+        planta_status_service,
+        sensor_reading_service,
+    )
 
     try:
         payload = json.loads(msg.payload.decode("utf-8"))
@@ -79,6 +83,18 @@ def _on_message(client, userdata, msg) -> None:
         return
 
     try:
+        # Tópicos broadcast do ciclo de rotina (sem device_id no path)
+        if msg.topic == "planta/status":
+            planta_status_service.ingest_planta_status(payload)
+            return
+        if msg.topic == "planta/alerta":
+            planta_alerta_service.ingest_planta_alerta(payload)
+            return
+
+        # Tópicos GAIA (gaia/{device_id}/...)
+        device_id = _parse_device_id(msg.topic)
+        if device_id is None:
+            return
         if msg.topic.endswith("/telemetry"):
             data = SensorReadingCreate(device_id=device_id, **payload)
             sensor_reading_service.ingest_reading(data)
@@ -142,4 +158,18 @@ def publish_pump_command(device_id: UUID, action: str, duration_seconds: float) 
     topic = f"{MQTT_TOPIC_PREFIX}/{device_id}/cmd/pump"
     payload = json.dumps({"action": action, "duration_seconds": duration_seconds})
     result = _client.publish(topic, payload, qos=1)
+    return result.rc == mqtt.MQTT_ERR_SUCCESS
+
+
+def publish_plant_config(payload: dict) -> bool:
+    """Publica a planta recém-plantada no tópico ``planta/config``.
+
+    Tópico fixo (broadcast) — qualquer ESP32 escutando recebe a
+    configuração do novo plantio (id da planta_estufa + dados da planta).
+    """
+    if _client is None:
+        logger.error("Tentativa de publicar planta/config sem cliente MQTT ativo")
+        return False
+
+    result = _client.publish("planta/config", json.dumps(payload, default=str), qos=1)
     return result.rc == mqtt.MQTT_ERR_SUCCESS

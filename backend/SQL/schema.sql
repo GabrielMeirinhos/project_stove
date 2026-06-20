@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS plant (
     optimal_humidity_max numeric NOT NULL,
     optimal_soil_moisture_min numeric NOT NULL,
     optimal_soil_moisture_max numeric NOT NULL,
+    optimal_light_min numeric,
+    optimal_light_max numeric,
     watering_interval_hours integer NOT NULL,
     created_at timestamptz NOT NULL
 );
@@ -39,11 +41,15 @@ CREATE TABLE IF NOT EXISTS device (
 
 CREATE TABLE IF NOT EXISTS sensor_reading (
     id uuid PRIMARY KEY,
-    device_id uuid NOT NULL REFERENCES device(id),
+    device_id uuid REFERENCES device(id),
     temperature_celsius numeric,
     humidity_percent numeric,
     soil_moisture_percent numeric,
     light_lux numeric,
+    light_percent numeric,
+    pump_state varchar(20),
+    stabilized boolean,
+    firmware_ts bigint,
     status varchar(20) NOT NULL,
     recorded_at timestamptz NOT NULL
 );
@@ -101,4 +107,24 @@ CREATE TABLE IF NOT EXISTS alert (
     resolved boolean NOT NULL DEFAULT FALSE,
     triggered_at timestamptz NOT NULL,
     resolved_at timestamptz
+);
+
+CREATE TABLE IF NOT EXISTS planta_estufa (
+    id uuid PRIMARY KEY,
+    plant_id uuid NOT NULL REFERENCES plant(id),
+    life_days integer,
+    dia_inclusao timestamptz NOT NULL,
+    dia_saida timestamptz,
+    dia_nascenca timestamptz
+);
+
+CREATE TABLE IF NOT EXISTS planta_alerta (
+    id uuid PRIMARY KEY,
+    planta varchar(100) NOT NULL,
+    tipo varchar(30) NOT NULL,
+    nivel varchar(20) NOT NULL,
+    mensagem text NOT NULL,
+    valor numeric,
+    minimo numeric,
+    recebido_em timestamptz NOT NULL
 );
